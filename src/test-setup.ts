@@ -24,4 +24,4 @@ const mockHass = {
 };
 
 // Make mockHass available globally for tests
-(globalThis as any).mockHass = mockHass; 
+(globalThis as any).mockHass = mockHass;

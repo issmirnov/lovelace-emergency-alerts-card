@@ -12,7 +12,7 @@ describe('EmergencyAlertsCard', () => {
   beforeEach(() => {
     // Create a fresh card instance directly
     card = new EmergencyAlertsCard();
-    
+
     // Setup mock hass
     mockHass = {
       states: {
@@ -33,7 +33,7 @@ describe('EmergencyAlertsCard', () => {
         language: 'en',
       },
     };
-    
+
     card.hass = mockHass;
     card.config = {
       type: 'custom:emergency-alerts-card',
@@ -49,7 +49,7 @@ describe('EmergencyAlertsCard', () => {
     card.setConfig({
       type: 'custom:emergency-alerts-card',
     });
-    
+
     expect(card.config).toBeDefined();
     expect(card.config?.type).toBe('custom:emergency-alerts-card');
   });
@@ -66,9 +66,9 @@ describe('EmergencyAlertsCard', () => {
       { severity: 'warning', entity_id: '2' },
       { severity: 'critical', entity_id: '3' },
     ] as any[];
-    
+
     const grouped = card._groupAlertsBySeverity(alerts);
-    
+
     expect(grouped.critical).toHaveLength(2);
     expect(grouped.warning).toHaveLength(1);
     expect(grouped.info).toHaveLength(0);
@@ -78,7 +78,7 @@ describe('EmergencyAlertsCard', () => {
     const now = new Date();
     const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
     const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
-    
+
     expect(card._formatTimeAgo(fiveMinutesAgo.toISOString())).toBe('5 minutes ago');
     expect(card._formatTimeAgo(oneHourAgo.toISOString())).toBe('1 hour ago');
     expect(card._formatTimeAgo('')).toBe('');
@@ -86,14 +86,12 @@ describe('EmergencyAlertsCard', () => {
 
   test('should handle acknowledge action', async () => {
     const entityId = 'binary_sensor.emergency_door_open';
-    
+
     await card._handleAcknowledge(entityId);
-    
-    expect(mockHass.callService).toHaveBeenCalledWith(
-      'emergency_alerts',
-      'acknowledge',
-      { entity_id: entityId }
-    );
+
+    expect(mockHass.callService).toHaveBeenCalledWith('emergency_alerts', 'acknowledge', {
+      entity_id: entityId,
+    });
   });
 
   test('should get severity icon correctly', () => {
@@ -112,7 +110,7 @@ describe('EmergencyAlertsCard', () => {
 
   test('should handle missing hass gracefully', () => {
     card.hass = undefined;
-    
+
     // Should not throw error and return loading state
     const result = card.render();
     expect(result).toBeDefined();
@@ -121,10 +119,10 @@ describe('EmergencyAlertsCard', () => {
   test('should update alerts when hass changes', () => {
     // Initially no alerts
     expect(card.alerts).toHaveLength(0);
-    
+
     // Trigger the private update method directly
     (card as any)._updateAlerts();
-    
+
     // Should have one alert from mockHass
     expect(card.alerts).toHaveLength(1);
     expect(card.alerts[0].entity_id).toBe('binary_sensor.emergency_door_open');
@@ -133,8 +131,8 @@ describe('EmergencyAlertsCard', () => {
 
   test('should handle acknowledge action without hass', async () => {
     card.hass = undefined;
-    
+
     // Should not throw error
     await expect(card._handleAcknowledge('test_entity')).resolves.toBeUndefined();
   });
-}); 
+});

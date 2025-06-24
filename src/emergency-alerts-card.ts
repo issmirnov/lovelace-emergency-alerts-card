@@ -28,7 +28,7 @@ interface Alert {
 export class EmergencyAlertsCard extends LitElement {
   hass?: HomeAssistant;
   config?: CardConfig;
-  
+
   public alerts: Alert[] = [];
   public grouped: Record<string, Alert[]> = {};
   private groupOrder: string[] = [];
@@ -48,7 +48,7 @@ export class EmergencyAlertsCard extends LitElement {
       padding: 16px;
       background: var(--ha-card-background, white);
       border-radius: var(--ha-card-border-radius, 8px);
-      box-shadow: var(--ha-card-box-shadow, 0 2px 4px rgba(0,0,0,0.1));
+      box-shadow: var(--ha-card-box-shadow, 0 2px 4px rgba(0, 0, 0, 0.1));
     }
     .summary-header {
       font-size: 1.2em;
@@ -64,10 +64,18 @@ export class EmergencyAlertsCard extends LitElement {
       border-radius: 4px;
       background: var(--secondary-background-color);
     }
-    .alert-critical { border-left: 4px solid #f44336; }
-    .alert-warning { border-left: 4px solid #ff9800; }
-    .alert-info { border-left: 4px solid #2196f3; }
-    .acknowledged { opacity: 0.6; }
+    .alert-critical {
+      border-left: 4px solid #f44336;
+    }
+    .alert-warning {
+      border-left: 4px solid #ff9800;
+    }
+    .alert-info {
+      border-left: 4px solid #2196f3;
+    }
+    .acknowledged {
+      opacity: 0.6;
+    }
     .group-header {
       font-weight: bold;
       margin: 16px 0 8px 0;
@@ -101,8 +109,8 @@ export class EmergencyAlertsCard extends LitElement {
 
   public _groupAlertsBySeverity(alerts: Alert[]): Record<string, Alert[]> {
     const grouped: Record<string, Alert[]> = {};
-    this.severityOrder.forEach(sev => grouped[sev] = []);
-    
+    this.severityOrder.forEach(sev => (grouped[sev] = []));
+
     for (const alert of alerts) {
       grouped[alert.severity] = grouped[alert.severity] || [];
       grouped[alert.severity].push(alert);
@@ -112,7 +120,7 @@ export class EmergencyAlertsCard extends LitElement {
 
   private _updateAlerts(): void {
     if (!this.hass) return;
-    
+
     const alerts: Alert[] = [];
     Object.values(this.hass.states).forEach((entity: any) => {
       if (entity.entity_id.startsWith('binary_sensor.emergency_')) {
@@ -144,7 +152,7 @@ export class EmergencyAlertsCard extends LitElement {
     const diffMs = now.getTime() - then.getTime();
     const diffMins = Math.floor(diffMs / (1000 * 60));
     const diffHours = Math.floor(diffMins / 60);
-    
+
     if (diffMins < 1) return 'just now';
     if (diffMins < 60) return `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`;
     return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
@@ -152,19 +160,27 @@ export class EmergencyAlertsCard extends LitElement {
 
   public _getSeverityIcon(severity: string): string {
     switch (severity) {
-      case 'critical': return 'mdi:alert-circle';
-      case 'warning': return 'mdi:alert';
-      case 'info': return 'mdi:information';
-      default: return 'mdi:help-circle';
+      case 'critical':
+        return 'mdi:alert-circle';
+      case 'warning':
+        return 'mdi:alert';
+      case 'info':
+        return 'mdi:information';
+      default:
+        return 'mdi:help-circle';
     }
   }
 
   public _getSeverityColor(severity: string): string {
     switch (severity) {
-      case 'critical': return '#f44336';
-      case 'warning': return '#ff9800';
-      case 'info': return '#2196f3';
-      default: return '#9e9e9e';
+      case 'critical':
+        return '#f44336';
+      case 'warning':
+        return '#ff9800';
+      case 'info':
+        return '#2196f3';
+      default:
+        return '#9e9e9e';
     }
   }
 
@@ -177,36 +193,48 @@ export class EmergencyAlertsCard extends LitElement {
 
     return html`
       <div class="card">
-        <div class="summary-header">
-          Emergency Alerts (${totalActive} active)
-        </div>
-        
+        <div class="summary-header">Emergency Alerts (${totalActive} active)</div>
+
         ${this.severityOrder.map(sev => {
           const alerts = this.grouped[sev] || [];
           const activeCount = alerts.filter(a => a.state === 'on' && !a.acknowledged).length;
-          
+
           if (alerts.length === 0) return '';
-          
+
           return html`
             <div class="group-header alert-${sev}">
               ${sev.charAt(0).toUpperCase() + sev.slice(1)} (${activeCount})
             </div>
-            ${alerts.map(alert => html`
-              <div class="alert-item alert-${alert.severity} ${alert.acknowledged ? 'acknowledged' : ''}">
-                <ha-icon icon="${this._getSeverityIcon(alert.severity)}" style="color: ${this._getSeverityColor(alert.severity)}; margin-right: 8px;"></ha-icon>
-                <div style="flex: 1;">
-                  <div>${alert.name}</div>
-                  <div style="font-size: 0.8em; opacity: 0.7;">
-                    ${alert.group} • ${this._formatTimeAgo(alert.first_triggered || '')}
+            ${alerts.map(
+              alert => html`
+                <div
+                  class="alert-item alert-${alert.severity} ${alert.acknowledged
+                    ? 'acknowledged'
+                    : ''}"
+                >
+                  <ha-icon
+                    icon="${this._getSeverityIcon(alert.severity)}"
+                    style="color: ${this._getSeverityColor(alert.severity)}; margin-right: 8px;"
+                  ></ha-icon>
+                  <div style="flex: 1;">
+                    <div>${alert.name}</div>
+                    <div style="font-size: 0.8em; opacity: 0.7;">
+                      ${alert.group} • ${this._formatTimeAgo(alert.first_triggered || '')}
+                    </div>
                   </div>
+                  ${alert.state === 'on' && !alert.acknowledged
+                    ? html`
+                        <button
+                          class="acknowledge-btn"
+                          @click="${() => this._handleAcknowledge(alert.entity_id)}"
+                        >
+                          Acknowledge
+                        </button>
+                      `
+                    : ''}
                 </div>
-                ${alert.state === 'on' && !alert.acknowledged ? html`
-                  <button class="acknowledge-btn" @click="${() => this._handleAcknowledge(alert.entity_id)}">
-                    Acknowledge
-                  </button>
-                ` : ''}
-              </div>
-            `)}
+              `
+            )}
           `;
         })}
       </div>
@@ -230,5 +258,5 @@ declare global {
 (window.customCards = window.customCards || []).push({
   type: 'emergency-alerts-card',
   name: 'Emergency Alerts Card',
-  description: 'A card to display emergency alerts from the Emergency Alerts integration'
-}); 
+  description: 'A card to display emergency alerts from the Emergency Alerts integration',
+});

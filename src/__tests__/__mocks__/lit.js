@@ -3,9 +3,9 @@ class LitElement {
   static get properties() {
     return {};
   }
-  
+
   static styles = {};
-  
+
   constructor() {
     this.shadowRoot = {
       querySelector: jest.fn(),
@@ -13,7 +13,7 @@ class LitElement {
     };
     this.updateComplete = Promise.resolve();
   }
-  
+
   updated() {}
   requestUpdate() {}
   render() {
@@ -35,5 +35,5 @@ module.exports = {
   LitElement,
   html,
   css,
-  PropertyValues
-}; 
+  PropertyValues,
+};

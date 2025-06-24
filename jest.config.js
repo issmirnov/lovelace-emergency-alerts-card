@@ -20,9 +20,9 @@ module.exports = {
     'node_modules/(?!(lit|@lit)/)'
   ],
   extensionsToTreatAsEsm: ['.ts'],
-  globals: {
-    'ts-jest': {
+  transform: {
+    '^.+\\.ts$': ['ts-jest', {
       useESM: true
-    }
+    }]
   }
 }; 
