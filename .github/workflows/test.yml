@@ -1,0 +1,122 @@
+name: Test Emergency Alerts Card
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+
+jobs:
+  frontend-tests:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [16, 18, 20]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: package-lock.json
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run TypeScript compilation check
+      run: npx tsc --noEmit
+    
+    - name: Run tests
+      run: npm test -- --coverage --watchAll=false
+    
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage/lcov.info
+        flags: frontend
+        name: frontend-coverage
+        fail_ci_if_error: false
+
+  lint-and-format:
+    name: Lint and Format Check
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Node.js 18
+      uses: actions/setup-node@v4
+      with:
+        node-version: 18
+        cache: 'npm'
+        cache-dependency-path: package-lock.json
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Lint TypeScript/JavaScript
+      run: npm run lint
+    
+    - name: Check TypeScript formatting
+      run: npm run format:check
+
+  build-and-package:
+    name: Build and Package
+    runs-on: ubuntu-latest
+    needs: [frontend-tests, lint-and-format]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Node.js 18
+      uses: actions/setup-node@v4
+      with:
+        node-version: 18
+        cache: 'npm'
+        cache-dependency-path: package-lock.json
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Build card
+      run: npm run build
+    
+    - name: Validate build output
+      run: |
+        if [ ! -f "dist/emergency-alerts-card.js" ]; then
+          echo "❌ Build output not found"
+          exit 1
+        fi
+        echo "✅ Build output validated"
+    
+    - name: Archive production artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: card-build
+        path: |
+          dist/
+          hacs.json
+          README.md
+        retention-days: 30
+    
+    - name: Create release package
+      if: startsWith(github.ref, 'refs/tags/')
+      run: |
+        mkdir -p release
+        cp dist/emergency-alerts-card.js release/
+        cp hacs.json release/
+        cp README.md release/
+        cd release
+        tar -czf ../emergency-alerts-card-${{ github.ref_name }}.tar.gz *
+    
+    - name: Upload release artifact
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: actions/upload-artifact@v3
+      with:
+        name: release-package
+        path: emergency-alerts-card-*.tar.gz
+        retention-days: 90 
