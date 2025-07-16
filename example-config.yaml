@@ -1,0 +1,52 @@
+# Example Home Assistant Configuration for Emergency Alerts Card
+
+# 1. Add this resource to your Lovelace configuration
+# Go to: Configuration → Lovelace Dashboards → Resources → Add Resource
+
+# Resource Configuration:
+# URL: /local/emergency-alerts-card.js
+# Type: JavaScript Module
+
+# 2. Add this card to your dashboard
+# Go to: Edit Dashboard → Add Card → Manual
+
+# Basic Card Configuration:
+type: custom:emergency-alerts-card
+
+# Advanced Card Configuration:
+type: custom:emergency-alerts-card
+summary_entity: sensor.emergency_summary  # Optional: specify summary sensor
+
+# 3. Example Lovelace Dashboard YAML:
+# (If using YAML mode)
+
+resources:
+  - url: /local/emergency-alerts-card.js
+    type: module
+
+views:
+  - title: Emergency Dashboard
+    cards:
+      - type: custom:emergency-alerts-card
+        summary_entity: sensor.emergency_summary
+      
+      # You can also add specific emergency sensors
+      - type: entities
+        title: Emergency Sensors
+        entities:
+          - binary_sensor.emergency_door_open
+          - binary_sensor.emergency_window_broken
+          - binary_sensor.emergency_fire_alarm
+          - binary_sensor.emergency_security_breach
+
+# 4. Expected Emergency Alert Entities:
+# The card expects binary sensors with these attributes:
+# - entity_id: binary_sensor.emergency_*
+# - state: 'on' (alert active) or 'off' (alert cleared)
+# - attributes:
+#   - friendly_name: "Emergency: Door Open"
+#   - severity: "critical" | "warning" | "info"
+#   - group: "security" | "safety" | "environmental"
+#   - acknowledged: boolean
+#   - first_triggered: ISO datetime string
+#   - last_cleared: ISO datetime string (optional) 

@@ -58,6 +58,26 @@ summary_entity: sensor.emergency_summary  # Optional: specific summary entity
 npm install
 ```
 
+### Testing with Home Assistant Devcontainer
+
+If you have the Emergency Alerts integration running in a devcontainer (as in this project structure), you can easily test the card:
+
+```bash
+# Quick deploy to Home Assistant
+./dev-with-ha.sh
+
+# Or manually:
+npm run build:deploy
+
+# For continuous development (rebuilds and deploys on changes)
+npm run dev:deploy
+```
+
+This will:
+1. Build the card from TypeScript
+2. Copy `emergency-alerts-card.js` to `../emergency_alerts/config/www/`
+3. Make it available in Home Assistant as `/local/emergency-alerts-card.js`
+
 ### Testing
 ```bash
 # Run tests
@@ -80,6 +100,12 @@ npm run dev
 
 # Production build
 npm run build
+
+# Build and deploy to HA
+npm run build:deploy
+
+# Deploy existing build
+npm run deploy
 
 # Build and test
 ./test.sh --build
