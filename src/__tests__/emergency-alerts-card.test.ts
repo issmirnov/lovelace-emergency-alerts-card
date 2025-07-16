@@ -24,6 +24,7 @@ describe('EmergencyAlertsCard', () => {
             severity: 'critical',
             group: 'security',
             acknowledged: false,
+            escalated: false,
             first_triggered: '2023-01-01T12:00:00Z',
           },
         },
@@ -134,5 +135,39 @@ describe('EmergencyAlertsCard', () => {
 
     // Should not throw error
     await expect(card._handleAcknowledge('test_entity')).resolves.toBeUndefined();
+  });
+
+  test('should handle clear action', async () => {
+    const entityId = 'binary_sensor.emergency_door_open';
+
+    await card._handleClear(entityId);
+
+    expect(mockHass.callService).toHaveBeenCalledWith('emergency_alerts', 'clear', {
+      entity_id: entityId,
+    });
+  });
+
+  test('should handle escalate action', async () => {
+    const entityId = 'binary_sensor.emergency_door_open';
+
+    await card._handleEscalate(entityId);
+
+    expect(mockHass.callService).toHaveBeenCalledWith('emergency_alerts', 'escalate', {
+      entity_id: entityId,
+    });
+  });
+
+  test('should handle clear action without hass', async () => {
+    card.hass = undefined;
+
+    // Should not throw error
+    await expect(card._handleClear('test_entity')).resolves.toBeUndefined();
+  });
+
+  test('should handle escalate action without hass', async () => {
+    card.hass = undefined;
+
+    // Should not throw error
+    await expect(card._handleEscalate('test_entity')).resolves.toBeUndefined();
   });
 });

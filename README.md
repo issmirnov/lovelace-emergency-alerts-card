@@ -9,7 +9,8 @@ A custom Lovelace card for displaying emergency alerts from the Emergency Alerts
 
 - **Real-time Alert Display**: Shows active emergency alerts with severity indicators
 - **Alert Grouping**: Groups alerts by severity (critical, warning, info)
-- **Acknowledgment Support**: One-click alert acknowledgment
+- **Multiple Actions**: Acknowledge, Clear, and Escalate alerts with one-click buttons
+- **Smart Button Logic**: Shows appropriate actions based on alert state
 - **Time Tracking**: Shows when alerts were first triggered
 - **Responsive Design**: Adapts to different screen sizes
 - **Home Assistant Integration**: Seamlessly integrates with the Emergency Alerts integration

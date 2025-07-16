@@ -48,5 +48,17 @@ views:
 #   - severity: "critical" | "warning" | "info"
 #   - group: "security" | "safety" | "environmental"
 #   - acknowledged: boolean
+#   - escalated: boolean
 #   - first_triggered: ISO datetime string
-#   - last_cleared: ISO datetime string (optional) 
+#   - last_cleared: ISO datetime string (optional)
+
+# 5. Available Actions:
+# The card provides three action buttons for active alerts:
+# - **Acknowledge**: Mark alert as acknowledged (hides acknowledge button)
+# - **Escalate**: Manually escalate the alert (triggers escalation actions)
+# - **Clear**: Manually clear the alert (sets state to off, triggers clear actions)
+#
+# Services called:
+# - emergency_alerts.acknowledge
+# - emergency_alerts.escalate  
+# - emergency_alerts.clear 

@@ -21,6 +21,7 @@ interface Alert {
   severity: string;
   group: string;
   acknowledged: boolean;
+  escalated: boolean;
   first_triggered?: string;
   last_cleared?: string;
 }
@@ -76,20 +77,48 @@ export class EmergencyAlertsCard extends LitElement {
     .acknowledged {
       opacity: 0.6;
     }
+    .escalated {
+      border-left: 4px solid var(--error-color, #f44336);
+      background: rgba(244, 67, 54, 0.1);
+    }
     .group-header {
       font-weight: bold;
       margin: 16px 0 8px 0;
       padding: 8px;
       border-radius: 4px;
     }
-    .acknowledge-btn {
+    .action-buttons {
+      display: flex;
+      gap: 6px;
       margin-left: auto;
+    }
+
+    .action-btn {
       padding: 4px 8px;
-      background: var(--primary-color);
-      color: white;
       border: none;
       border-radius: 4px;
       cursor: pointer;
+      font-size: 0.75em;
+      transition: opacity 0.2s;
+    }
+
+    .action-btn:hover {
+      opacity: 0.8;
+    }
+
+    .acknowledge-btn {
+      background: var(--primary-color);
+      color: white;
+    }
+
+    .clear-btn {
+      background: var(--success-color, #4caf50);
+      color: white;
+    }
+
+    .escalate-btn {
+      background: var(--error-color, #f44336);
+      color: white;
     }
   `;
 
@@ -131,6 +160,7 @@ export class EmergencyAlertsCard extends LitElement {
           severity: entity.attributes.severity || 'info',
           group: entity.attributes.group || 'other',
           acknowledged: !!entity.attributes.acknowledged,
+          escalated: !!entity.attributes.escalated,
           first_triggered: entity.attributes.first_triggered,
           last_cleared: entity.attributes.last_cleared,
         });
@@ -143,6 +173,16 @@ export class EmergencyAlertsCard extends LitElement {
   public async _handleAcknowledge(entity_id: string): Promise<void> {
     if (!this.hass) return;
     await this.hass.callService('emergency_alerts', 'acknowledge', { entity_id });
+  }
+
+  public async _handleClear(entity_id: string): Promise<void> {
+    if (!this.hass) return;
+    await this.hass.callService('emergency_alerts', 'clear', { entity_id });
+  }
+
+  public async _handleEscalate(entity_id: string): Promise<void> {
+    if (!this.hass) return;
+    await this.hass.callService('emergency_alerts', 'escalate', { entity_id });
   }
 
   public _formatTimeAgo(iso: string): string {
@@ -210,6 +250,8 @@ export class EmergencyAlertsCard extends LitElement {
                 <div
                   class="alert-item alert-${alert.severity} ${alert.acknowledged
                     ? 'acknowledged'
+                    : ''} ${alert.escalated
+                    ? 'escalated'
                     : ''}"
                 >
                   <ha-icon
@@ -222,14 +264,32 @@ export class EmergencyAlertsCard extends LitElement {
                       ${alert.group} • ${this._formatTimeAgo(alert.first_triggered || '')}
                     </div>
                   </div>
-                  ${alert.state === 'on' && !alert.acknowledged
+                  ${alert.state === 'on' 
                     ? html`
-                        <button
-                          class="acknowledge-btn"
-                          @click="${() => this._handleAcknowledge(alert.entity_id)}"
-                        >
-                          Acknowledge
-                        </button>
+                        <div class="action-buttons">
+                          ${!alert.acknowledged
+                            ? html`
+                                <button
+                                  class="action-btn acknowledge-btn"
+                                  @click="${() => this._handleAcknowledge(alert.entity_id)}"
+                                >
+                                  Acknowledge
+                                </button>
+                              `
+                            : ''}
+                          <button
+                            class="action-btn escalate-btn"
+                            @click="${() => this._handleEscalate(alert.entity_id)}"
+                          >
+                            Escalate
+                          </button>
+                          <button
+                            class="action-btn clear-btn"
+                            @click="${() => this._handleClear(alert.entity_id)}"
+                          >
+                            Clear
+                          </button>
+                        </div>
                       `
                     : ''}
                 </div>
