@@ -13,9 +13,40 @@
 # Basic Card Configuration:
 type: custom:emergency-alerts-card
 
-# Advanced Card Configuration:
+# Advanced Card Configuration with all options:
 type: custom:emergency-alerts-card
 summary_entity: sensor.emergency_summary  # Optional: specify summary sensor
+
+# Display Options
+show_acknowledged: true          # Show/hide acknowledged alerts
+show_cleared: false              # Show/hide cleared alerts  
+show_escalated: true             # Show/hide escalated alerts
+group_by: "severity"             # "severity", "group", "status", or "none"
+sort_by: "first_triggered"       # "first_triggered", "severity", "name", "group"
+
+# Filtering Options
+severity_filter: ["critical", "warning", "info"]  # Which severities to show
+group_filter: ["security", "safety", "environment"]  # Which groups to show
+status_filter: ["active", "acknowledged", "escalated"]  # Which statuses to show
+
+# Visual Options
+compact_mode: false              # More compact display
+show_timestamps: true            # Show "X minutes ago"
+show_group_labels: true          # Show group names
+show_severity_icons: true        # Show severity icons
+max_alerts_per_group: 10         # Limit alerts per group
+
+# Action Options
+show_acknowledge_button: true    # Show acknowledge button
+show_clear_button: true          # Show clear button  
+show_escalate_button: true       # Show escalate button
+button_style: "compact"          # "compact", "full", "icons_only"
+
+# Advanced Options
+entity_patterns:                 # Custom entity detection patterns
+  - "binary_sensor.emergency_*"
+  - "binary_sensor.*"            # If entity has severity attribute
+refresh_interval: 30             # Auto-refresh interval in seconds
 
 # 3. Example Lovelace Dashboard YAML:
 # (If using YAML mode)
@@ -27,8 +58,37 @@ resources:
 views:
   - title: Emergency Dashboard
     cards:
+      # Basic emergency alerts card
       - type: custom:emergency-alerts-card
         summary_entity: sensor.emergency_summary
+      
+      # Compact view for mobile
+      - type: custom:emergency-alerts-card
+        compact_mode: true
+        show_timestamps: false
+        button_style: "icons_only"
+        max_alerts_per_group: 5
+      
+      # Grouped by status (active, acknowledged, escalated)
+      - type: custom:emergency-alerts-card
+        group_by: "status"
+        show_acknowledged: true
+        show_cleared: true
+        title: "Alert Status Overview"
+      
+      # Security-focused view
+      - type: custom:emergency-alerts-card
+        group_by: "group"
+        group_filter: ["security"]
+        severity_filter: ["critical", "warning"]
+        title: "Security Alerts"
+      
+      # Critical alerts only
+      - type: custom:emergency-alerts-card
+        severity_filter: ["critical"]
+        show_acknowledge_button: false
+        show_escalate_button: false
+        title: "Critical Alerts Only"
       
       # You can also add specific emergency sensors
       - type: entities
@@ -39,7 +99,40 @@ views:
           - binary_sensor.emergency_fire_alarm
           - binary_sensor.emergency_security_breach
 
-# 4. Expected Emergency Alert Entities:
+# 4. Configuration Examples:
+
+# Show only active alerts (hide acknowledged/cleared)
+- type: custom:emergency-alerts-card
+  show_acknowledged: false
+  show_cleared: false
+  status_filter: ["active"]
+
+# Group by alert type instead of severity
+- type: custom:emergency-alerts-card
+  group_by: "group"
+  show_group_labels: true
+
+# Compact mobile-friendly view
+- type: custom:emergency-alerts-card
+  compact_mode: true
+  button_style: "icons_only"
+  show_timestamps: false
+  max_alerts_per_group: 3
+
+# Show all alerts including cleared ones
+- type: custom:emergency-alerts-card
+  show_cleared: true
+  group_by: "status"
+  sort_by: "first_triggered"
+
+# Security-focused dashboard
+- type: custom:emergency-alerts-card
+  group_filter: ["security"]
+  severity_filter: ["critical", "warning"]
+  show_escalate_button: true
+  show_acknowledge_button: false
+
+# 5. Expected Emergency Alert Entities:
 # The card expects binary sensors with these attributes:
 # - entity_id: binary_sensor.emergency_*
 # - state: 'on' (alert active) or 'off' (alert cleared)
@@ -49,10 +142,11 @@ views:
 #   - group: "security" | "safety" | "environmental"
 #   - acknowledged: boolean
 #   - escalated: boolean
+#   - cleared: boolean
 #   - first_triggered: ISO datetime string
 #   - last_cleared: ISO datetime string (optional)
 
-# 5. Available Actions:
+# 6. Available Actions:
 # The card provides three action buttons for active alerts:
 # - **Acknowledge**: Mark alert as acknowledged (hides acknowledge button)
 # - **Escalate**: Manually escalate the alert (triggers escalation actions)

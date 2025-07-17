@@ -80,8 +80,8 @@ describe('EmergencyAlertsCard', () => {
     const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
     const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
 
-    expect(card._formatTimeAgo(fiveMinutesAgo.toISOString())).toBe('5 minutes ago');
-    expect(card._formatTimeAgo(oneHourAgo.toISOString())).toBe('1 hour ago');
+    expect(card._formatTimeAgo(fiveMinutesAgo.toISOString())).toBe('5m ago');
+    expect(card._formatTimeAgo(oneHourAgo.toISOString())).toBe('1h ago');
     expect(card._formatTimeAgo('')).toBe('');
   });
 
