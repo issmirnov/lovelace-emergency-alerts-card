@@ -12,32 +12,32 @@ interface HomeAssistant {
 interface CardConfig {
   type: string;
   summary_entity?: string;
-  
+
   // Display options
   show_acknowledged?: boolean;
   show_cleared?: boolean;
   show_escalated?: boolean;
   group_by?: 'severity' | 'group' | 'status' | 'none';
   sort_by?: 'first_triggered' | 'severity' | 'name' | 'group';
-  
+
   // Filtering
   severity_filter?: string[];
   group_filter?: string[];
   status_filter?: string[];
-  
+
   // Visual options
   compact_mode?: boolean;
   show_timestamps?: boolean;
   show_group_labels?: boolean;
   show_severity_icons?: boolean;
   max_alerts_per_group?: number;
-  
+
   // Action options
   show_acknowledge_button?: boolean;
   show_clear_button?: boolean;
   show_escalate_button?: boolean;
   button_style?: 'compact' | 'full' | 'icons_only';
-  
+
   // Advanced
   entity_patterns?: string[];
   refresh_interval?: number;
@@ -83,7 +83,7 @@ export class EmergencyAlertsCard extends LitElement {
       border-radius: var(--ha-card-border-radius, 8px);
       box-shadow: var(--ha-card-box-shadow, 0 2px 4px rgba(0, 0, 0, 0.1));
     }
-    
+
     .summary-header {
       font-size: 1.2em;
       font-weight: bold;
@@ -91,7 +91,7 @@ export class EmergencyAlertsCard extends LitElement {
       text-align: center;
       color: var(--primary-text-color);
     }
-    
+
     .alert-item {
       display: flex;
       align-items: center;
@@ -102,38 +102,38 @@ export class EmergencyAlertsCard extends LitElement {
       transition: all 0.2s ease;
       border-left: 4px solid transparent;
     }
-    
+
     .alert-item:hover {
       background: var(--secondary-background-color-hover, #e8e8e8);
     }
-    
+
     .alert-critical {
       border-left-color: #f44336;
     }
-    
+
     .alert-warning {
       border-left-color: #ff9800;
     }
-    
+
     .alert-info {
       border-left-color: #2196f3;
     }
-    
+
     .alert-acknowledged {
       opacity: 0.7;
       background: var(--disabled-text-color, #bdbdbd);
     }
-    
+
     .alert-escalated {
       border-left-color: #9c27b0;
       background: rgba(156, 39, 176, 0.1);
     }
-    
+
     .alert-cleared {
       opacity: 0.5;
       background: var(--disabled-text-color, #e0e0e0);
     }
-    
+
     .group-header {
       font-weight: bold;
       margin: 20px 0 12px 0;
@@ -145,19 +145,19 @@ export class EmergencyAlertsCard extends LitElement {
       align-items: center;
       justify-content: space-between;
     }
-    
+
     .group-header.alert-critical {
       background: #f44336;
     }
-    
+
     .group-header.alert-warning {
       background: #ff9800;
     }
-    
+
     .group-header.alert-info {
       background: #2196f3;
     }
-    
+
     .action-buttons {
       display: flex;
       gap: 8px;
@@ -199,18 +199,18 @@ export class EmergencyAlertsCard extends LitElement {
       background: var(--error-color, #f44336);
       color: white;
     }
-    
+
     .alert-content {
       flex: 1;
       margin-right: 12px;
     }
-    
+
     .alert-name {
       font-weight: 500;
       color: var(--primary-text-color);
       margin-bottom: 4px;
     }
-    
+
     .alert-meta {
       font-size: 0.8em;
       color: var(--secondary-text-color);
@@ -218,22 +218,22 @@ export class EmergencyAlertsCard extends LitElement {
       align-items: center;
       gap: 8px;
     }
-    
+
     .alert-icon {
       margin-right: 12px;
       font-size: 1.2em;
     }
-    
+
     .compact .alert-item {
       padding: 8px;
       margin: 3px 0;
     }
-    
+
     .compact .action-btn {
       padding: 4px 8px;
       font-size: 0.7em;
     }
-    
+
     .no-alerts {
       text-align: center;
       padding: 32px;
@@ -246,7 +246,7 @@ export class EmergencyAlertsCard extends LitElement {
     if (!config || !config.type) {
       throw new Error('Invalid configuration');
     }
-    
+
     // Set defaults
     this.config = {
       show_acknowledged: true,
@@ -268,9 +268,9 @@ export class EmergencyAlertsCard extends LitElement {
       button_style: 'compact',
       entity_patterns: ['binary_sensor.emergency_*'],
       refresh_interval: 30,
-      ...config
+      ...config,
     };
-    
+
     // Start auto-refresh if configured
     this._startAutoRefresh();
   }
@@ -286,7 +286,7 @@ export class EmergencyAlertsCard extends LitElement {
     if (this.refreshInterval) {
       clearInterval(this.refreshInterval);
     }
-    
+
     if (this.config?.refresh_interval && this.config.refresh_interval > 0) {
       this.refreshInterval = window.setInterval(() => {
         this._updateAlerts();
@@ -314,7 +314,7 @@ export class EmergencyAlertsCard extends LitElement {
 
   public _groupAlertsByGroup(alerts: Alert[]): Record<string, Alert[]> {
     const grouped: Record<string, Alert[]> = {};
-    
+
     for (const alert of alerts) {
       const group = alert.group || 'other';
       grouped[group] = grouped[group] || [];
@@ -325,12 +325,12 @@ export class EmergencyAlertsCard extends LitElement {
 
   public _groupAlertsByStatus(alerts: Alert[]): Record<string, Alert[]> {
     const grouped: Record<string, Alert[]> = {
-      'active': [],
-      'acknowledged': [],
-      'escalated': [],
-      'cleared': []
+      active: [],
+      acknowledged: [],
+      escalated: [],
+      cleared: [],
     };
-    
+
     for (const alert of alerts) {
       grouped[alert.status].push(alert);
     }
@@ -342,7 +342,7 @@ export class EmergencyAlertsCard extends LitElement {
 
     const alerts: Alert[] = [];
     const patterns = this.config.entity_patterns || ['binary_sensor.emergency_*'];
-    
+
     Object.values(this.hass.states).forEach((entity: any) => {
       // Check if entity matches any pattern
       const matchesPattern = patterns.some(pattern => {
@@ -352,11 +352,11 @@ export class EmergencyAlertsCard extends LitElement {
         }
         return entity.entity_id === pattern;
       });
-      
+
       // Also check if entity has emergency alert attributes
-      const hasEmergencyAttributes = entity.attributes && 
-        (entity.attributes.severity || entity.attributes.group);
-      
+      const hasEmergencyAttributes =
+        entity.attributes && (entity.attributes.severity || entity.attributes.group);
+
       if (matchesPattern || hasEmergencyAttributes) {
         const alert: Alert = {
           entity_id: entity.entity_id,
@@ -369,19 +369,19 @@ export class EmergencyAlertsCard extends LitElement {
           cleared: !!entity.attributes.cleared,
           first_triggered: entity.attributes.first_triggered,
           last_cleared: entity.attributes.last_cleared,
-          status: this._getAlertStatus(entity)
+          status: this._getAlertStatus(entity),
         };
-        
+
         // Apply filters
         if (this._shouldShowAlert(alert)) {
           alerts.push(alert);
         }
       }
     });
-    
+
     // Sort alerts
     this._sortAlerts(alerts);
-    
+
     this.alerts = alerts;
     this.grouped = this._groupAlerts(alerts);
   }
@@ -396,47 +396,51 @@ export class EmergencyAlertsCard extends LitElement {
 
   private _shouldShowAlert(alert: Alert): boolean {
     if (!this.config) return true;
-    
+
     // Severity filter
-    if (this.config.severity_filter && 
-        !this.config.severity_filter.includes(alert.severity)) {
+    if (this.config.severity_filter && !this.config.severity_filter.includes(alert.severity)) {
       return false;
     }
-    
+
     // Group filter
-    if (this.config.group_filter && 
-        this.config.group_filter.length > 0 &&
-        !this.config.group_filter.includes(alert.group)) {
+    if (
+      this.config.group_filter &&
+      this.config.group_filter.length > 0 &&
+      !this.config.group_filter.includes(alert.group)
+    ) {
       return false;
     }
-    
+
     // Status filter
-    if (this.config.status_filter && 
-        !this.config.status_filter.includes(alert.status)) {
+    if (this.config.status_filter && !this.config.status_filter.includes(alert.status)) {
       return false;
     }
-    
+
     // Individual status toggles
     if (!this.config.show_acknowledged && alert.acknowledged) return false;
     if (!this.config.show_cleared && alert.cleared) return false;
     if (!this.config.show_escalated && alert.escalated) return false;
-    
+
     return true;
   }
 
   private _sortAlerts(alerts: Alert[]): void {
     if (!this.config) return;
-    
+
     alerts.sort((a, b) => {
       switch (this.config!.sort_by) {
-        case 'first_triggered':
+        case 'first_triggered': {
           const aTime = a.first_triggered ? new Date(a.first_triggered).getTime() : 0;
           const bTime = b.first_triggered ? new Date(b.first_triggered).getTime() : 0;
           return bTime - aTime; // Newest first
-        case 'severity':
-          const severityOrder = { 'critical': 0, 'warning': 1, 'info': 2 };
-          return (severityOrder[a.severity as keyof typeof severityOrder] || 3) - 
-                 (severityOrder[b.severity as keyof typeof severityOrder] || 3);
+        }
+        case 'severity': {
+          const severityOrder = { critical: 0, warning: 1, info: 2 };
+          return (
+            (severityOrder[a.severity as keyof typeof severityOrder] || 3) -
+            (severityOrder[b.severity as keyof typeof severityOrder] || 3)
+          );
+        }
         case 'name':
           return a.name.localeCompare(b.name);
         case 'group':
@@ -449,14 +453,14 @@ export class EmergencyAlertsCard extends LitElement {
 
   private _groupAlerts(alerts: Alert[]): Record<string, Alert[]> {
     if (!this.config) return {};
-    
+
     switch (this.config.group_by) {
       case 'group':
         return this._groupAlertsByGroup(alerts);
       case 'status':
         return this._groupAlertsByStatus(alerts);
       case 'none':
-        return { 'all': alerts };
+        return { all: alerts };
       case 'severity':
       default:
         return this._groupAlertsBySeverity(alerts);
@@ -519,7 +523,7 @@ export class EmergencyAlertsCard extends LitElement {
 
   private _getGroupTitle(group: string): string {
     if (!this.config) return group;
-    
+
     switch (this.config.group_by) {
       case 'group':
         return group.charAt(0).toUpperCase() + group.slice(1);
@@ -534,7 +538,7 @@ export class EmergencyAlertsCard extends LitElement {
 
   private _getGroupCount(alerts: Alert[]): number {
     if (!this.config) return alerts.length;
-    
+
     switch (this.config.group_by) {
       case 'status':
         return alerts.length; // Show total count for status groups
@@ -580,60 +584,68 @@ export class EmergencyAlertsCard extends LitElement {
                 <div
                   class="alert-item alert-${alert.severity} ${alert.acknowledged
                     ? 'alert-acknowledged'
-                    : ''} ${alert.escalated
-                    ? 'alert-escalated'
-                    : ''} ${alert.cleared
+                    : ''} ${alert.escalated ? 'alert-escalated' : ''} ${alert.cleared
                     ? 'alert-cleared'
                     : ''}"
                 >
-                  ${this.config?.show_severity_icons ? html`
-                    <ha-icon
-                      class="alert-icon"
-                      icon="${this._getSeverityIcon(alert.severity)}"
-                      style="color: ${this._getSeverityColor(alert.severity)};"
-                    ></ha-icon>
-                  ` : ''}
-                  
+                  ${this.config?.show_severity_icons
+                    ? html`
+                        <ha-icon
+                          class="alert-icon"
+                          icon="${this._getSeverityIcon(alert.severity)}"
+                          style="color: ${this._getSeverityColor(alert.severity)};"
+                        ></ha-icon>
+                      `
+                    : ''}
+
                   <div class="alert-content">
                     <div class="alert-name">${alert.name}</div>
                     <div class="alert-meta">
-                      ${this.config?.show_group_labels ? html`
-                        <span>${alert.group}</span>
-                      ` : ''}
-                      ${this.config?.show_timestamps && alert.first_triggered ? html`
-                        <span>• ${this._formatTimeAgo(alert.first_triggered)}</span>
-                      ` : ''}
+                      ${this.config?.show_group_labels ? html` <span>${alert.group}</span> ` : ''}
+                      ${this.config?.show_timestamps && alert.first_triggered
+                        ? html` <span>• ${this._formatTimeAgo(alert.first_triggered)}</span> `
+                        : ''}
                     </div>
                   </div>
-                  
-                  ${alert.state === 'on' && this._shouldShowActions(alert) ? html`
-                    <div class="action-buttons">
-                      ${this.config?.show_acknowledge_button && !alert.acknowledged ? html`
-                        <button
-                          class="action-btn acknowledge-btn"
-                          @click="${() => this._handleAcknowledge(alert.entity_id)}"
-                        >
-                          ${this.config?.button_style === 'icons_only' ? '✓' : 'Acknowledge'}
-                        </button>
-                      ` : ''}
-                      ${this.config?.show_escalate_button ? html`
-                        <button
-                          class="action-btn escalate-btn"
-                          @click="${() => this._handleEscalate(alert.entity_id)}"
-                        >
-                          ${this.config?.button_style === 'icons_only' ? '↑' : 'Escalate'}
-                        </button>
-                      ` : ''}
-                      ${this.config?.show_clear_button ? html`
-                        <button
-                          class="action-btn clear-btn"
-                          @click="${() => this._handleClear(alert.entity_id)}"
-                        >
-                          ${this.config?.button_style === 'icons_only' ? '×' : 'Clear'}
-                        </button>
-                      ` : ''}
-                    </div>
-                  ` : ''}
+
+                  ${alert.state === 'on' && this._shouldShowActions(alert)
+                    ? html`
+                        <div class="action-buttons">
+                          ${this.config?.show_acknowledge_button && !alert.acknowledged
+                            ? html`
+                                <button
+                                  class="action-btn acknowledge-btn"
+                                  @click="${() => this._handleAcknowledge(alert.entity_id)}"
+                                >
+                                  ${this.config?.button_style === 'icons_only'
+                                    ? '✓'
+                                    : 'Acknowledge'}
+                                </button>
+                              `
+                            : ''}
+                          ${this.config?.show_escalate_button
+                            ? html`
+                                <button
+                                  class="action-btn escalate-btn"
+                                  @click="${() => this._handleEscalate(alert.entity_id)}"
+                                >
+                                  ${this.config?.button_style === 'icons_only' ? '↑' : 'Escalate'}
+                                </button>
+                              `
+                            : ''}
+                          ${this.config?.show_clear_button
+                            ? html`
+                                <button
+                                  class="action-btn clear-btn"
+                                  @click="${() => this._handleClear(alert.entity_id)}"
+                                >
+                                  ${this.config?.button_style === 'icons_only' ? '×' : 'Clear'}
+                                </button>
+                              `
+                            : ''}
+                        </div>
+                      `
+                    : ''}
                 </div>
               `
             )}
@@ -649,21 +661,21 @@ export class EmergencyAlertsCard extends LitElement {
 
   // Add static methods for Home Assistant card editor support
   static getConfigElement() {
-    return document.createElement("emergency-alerts-card-editor");
+    return document.createElement('emergency-alerts-card-editor');
   }
 
   static getStubConfig(): CardConfig {
     return {
-      type: "emergency-alerts-card",
-      summary_entity: "",
+      type: 'emergency-alerts-card',
+      summary_entity: '',
       show_acknowledged: true,
       show_cleared: false,
       show_escalated: true,
-      group_by: "severity",
-      sort_by: "first_triggered",
-      severity_filter: ["critical", "warning", "info"],
+      group_by: 'severity',
+      sort_by: 'first_triggered',
+      severity_filter: ['critical', 'warning', 'info'],
       group_filter: [],
-      status_filter: ["active", "acknowledged", "escalated"],
+      status_filter: ['active', 'acknowledged', 'escalated'],
       compact_mode: false,
       show_timestamps: true,
       show_group_labels: true,
@@ -672,9 +684,9 @@ export class EmergencyAlertsCard extends LitElement {
       show_acknowledge_button: true,
       show_clear_button: true,
       show_escalate_button: true,
-      button_style: "compact",
-      entity_patterns: ["binary_sensor.emergency_*"],
-      refresh_interval: 30
+      button_style: 'compact',
+      entity_patterns: ['binary_sensor.emergency_*'],
+      refresh_interval: 30,
     };
   }
 }
@@ -734,7 +746,8 @@ export class EmergencyAlertsCardEditor extends LitElement {
       max-width: 300px;
     }
 
-    ha-textfield, ha-select {
+    ha-textfield,
+    ha-select {
       width: 100%;
     }
 
@@ -802,14 +815,23 @@ export class EmergencyAlertsCardEditor extends LitElement {
     if (!this.config) return;
 
     const newConfig = { ...this.config };
-    
+
     // Handle nested object updates
     if (field.includes('.')) {
       const [parent, child] = field.split('.');
-      newConfig[parent as keyof CardConfig] = {
-        ...((newConfig[parent as keyof CardConfig] as any) || {}),
-        [child]: value
-      };
+      const parentKey = parent as keyof CardConfig;
+      const parentValue = newConfig[parentKey];
+
+      if (parentValue && typeof parentValue === 'object') {
+        (newConfig[parentKey] as any) = {
+          ...parentValue,
+          [child]: value,
+        };
+      } else {
+        (newConfig[parentKey] as any) = {
+          [child]: value,
+        };
+      }
     } else {
       (newConfig as any)[field] = value;
     }
@@ -851,32 +873,31 @@ export class EmergencyAlertsCardEditor extends LitElement {
 
   private _renderStringArrayEditor(field: string, label: string, helpText?: string) {
     const values = (this.config as any)?.[field] || [];
-    
+
     return html`
       <div class="field">
         <label>${label}</label>
         <div class="field-input">
           <div class="array-input">
-            ${values.map((value: string, index: number) => html`
-              <div class="array-item">
-                <ha-textfield
-                  .value=${value}
-                  @input=${(e: any) => this._updateArrayItem(field, index, e.target.value)}
-                  placeholder="Enter value..."
-                ></ha-textfield>
-                <mwc-button
-                  class="remove-btn"
-                  @click=${() => this._removeArrayItem(field, index)}
-                  outlined
-                >
-                  Remove
-                </mwc-button>
-              </div>
-            `)}
-            <mwc-button
-              @click=${() => this._addArrayItem(field)}
-              outlined
-            >
+            ${values.map(
+              (value: string, index: number) => html`
+                <div class="array-item">
+                  <ha-textfield
+                    .value=${value}
+                    @input=${(e: any) => this._updateArrayItem(field, index, e.target.value)}
+                    placeholder="Enter value..."
+                  ></ha-textfield>
+                  <mwc-button
+                    class="remove-btn"
+                    @click=${() => this._removeArrayItem(field, index)}
+                    outlined
+                  >
+                    Remove
+                  </mwc-button>
+                </div>
+              `
+            )}
+            <mwc-button @click=${() => this._addArrayItem(field)} outlined>
               Add ${label.replace(/s$/, '')}
             </mwc-button>
           </div>
@@ -896,7 +917,7 @@ export class EmergencyAlertsCardEditor extends LitElement {
         <!-- Basic Configuration -->
         <div class="section">
           <div class="section-header">Basic Configuration</div>
-          
+
           <div class="field">
             <label>Summary Entity</label>
             <div class="field-input">
@@ -949,7 +970,7 @@ export class EmergencyAlertsCardEditor extends LitElement {
         <!-- Display Options -->
         <div class="section">
           <div class="section-header">Display Options</div>
-          
+
           <div class="field">
             <label>Show Acknowledged Alerts</label>
             <ha-switch
@@ -1012,7 +1033,8 @@ export class EmergencyAlertsCardEditor extends LitElement {
               <ha-textfield
                 type="number"
                 .value=${String(this.config.max_alerts_per_group || 10)}
-                @input=${(e: any) => this._valueChanged('max_alerts_per_group', parseInt(e.target.value) || 10)}
+                @input=${(e: any) =>
+                  this._valueChanged('max_alerts_per_group', parseInt(e.target.value) || 10)}
                 min="1"
                 max="100"
               ></ha-textfield>
@@ -1023,7 +1045,7 @@ export class EmergencyAlertsCardEditor extends LitElement {
         <!-- Action Buttons -->
         <div class="section">
           <div class="section-header">Action Buttons</div>
-          
+
           <div class="field">
             <label>Show Acknowledge Button</label>
             <ha-switch
@@ -1069,19 +1091,17 @@ export class EmergencyAlertsCardEditor extends LitElement {
         <!-- Filtering -->
         <div class="section">
           <div class="section-header">Filtering</div>
-          
+
           ${this._renderStringArrayEditor(
             'severity_filter',
             'Severity Filter',
             'Which severity levels to show (critical, warning, info)'
           )}
-
           ${this._renderStringArrayEditor(
             'group_filter',
             'Group Filter',
             'Which alert groups to show (leave empty to show all)'
           )}
-
           ${this._renderStringArrayEditor(
             'status_filter',
             'Status Filter',
@@ -1092,7 +1112,7 @@ export class EmergencyAlertsCardEditor extends LitElement {
         <!-- Advanced Options -->
         <div class="section">
           <div class="section-header">Advanced Options</div>
-          
+
           ${this._renderStringArrayEditor(
             'entity_patterns',
             'Entity Patterns',
@@ -1105,7 +1125,8 @@ export class EmergencyAlertsCardEditor extends LitElement {
               <ha-textfield
                 type="number"
                 .value=${String(this.config.refresh_interval || 30)}
-                @input=${(e: any) => this._valueChanged('refresh_interval', parseInt(e.target.value) || 30)}
+                @input=${(e: any) =>
+                  this._valueChanged('refresh_interval', parseInt(e.target.value) || 30)}
                 min="5"
                 max="300"
               ></ha-textfield>
