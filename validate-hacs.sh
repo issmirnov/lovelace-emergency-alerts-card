@@ -124,7 +124,12 @@ if [ ! -f "README.md" ]; then
     exit 1
 fi
 
-readme_size=$(stat -c%s "README.md")
+# Cross-platform file size check
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    readme_size=$(stat -f%z "README.md")
+else
+    readme_size=$(stat -c%s "README.md")
+fi
 if [ "$readme_size" -lt 500 ]; then
     print_status "FAIL" "README.md seems too small ($readme_size bytes)"
     exit 1
@@ -175,18 +180,23 @@ if ! npm run build >/dev/null 2>&1; then
     exit 1
 fi
 
-if [ ! -f "dist/emergency-alerts-card.js" ]; then
-    print_status "FAIL" "Main card file not found in dist/"
+if [ ! -f "www/emergency-alerts-card.js" ]; then
+    print_status "FAIL" "Main card file not found in www/"
     exit 1
 fi
 
-file_size=$(stat -c%s "dist/emergency-alerts-card.js")
+# Cross-platform file size check
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    file_size=$(stat -f%z "www/emergency-alerts-card.js")
+else
+    file_size=$(stat -c%s "www/emergency-alerts-card.js")
+fi
 if [ "$file_size" -lt 1000 ]; then
     print_status "FAIL" "Card file seems too small ($file_size bytes)"
     exit 1
 fi
 
-if ! grep -q "customElements.define" dist/emergency-alerts-card.js; then
+if ! grep -q "customElements.define" www/emergency-alerts-card.js; then
     print_status "FAIL" "Card file doesn't contain customElements.define"
     exit 1
 fi

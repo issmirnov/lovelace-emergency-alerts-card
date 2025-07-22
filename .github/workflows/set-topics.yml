@@ -1,0 +1,35 @@
+name: Set Repository Topics
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, master ]
+    paths:
+      - '.github/topics.txt'
+
+jobs:
+  set-topics:
+    name: Set Repository Topics
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set repository topics
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const topics = fs.readFileSync('.github/topics.txt', 'utf8')
+              .split('\n')
+              .map(topic => topic.trim())
+              .filter(topic => topic.length > 0);
+            
+            await github.rest.repos.replaceAllTopics({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              names: topics
+            });
+            
+            console.log('Repository topics set to:', topics.join(', '));
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 

@@ -1,6 +1,5 @@
 {
   "name": "Emergency Alerts Card",
-  "description": "Custom Lovelace card to show emergency alert sensors.",
   "render_readme": true,
   "content_in_root": true,
   "filename": "www/emergency-alerts-card.js",

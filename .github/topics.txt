@@ -1,0 +1,9 @@
+homeassistant
+lovelace
+custom-card
+emergency
+alerts
+dashboard
+frontend
+home-automation
+iot 

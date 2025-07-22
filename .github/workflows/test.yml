@@ -87,7 +87,7 @@ jobs:
 
     - name: Validate build output
       run: |
-        if [ ! -f "dist/emergency-alerts-card.js" ]; then
+        if [ ! -f "www/emergency-alerts-card.js" ]; then
           echo "❌ Build output not found"
           exit 1
         fi
@@ -98,7 +98,7 @@ jobs:
       with:
         name: card-build
         path: |
-          dist/
+          www/
           hacs.json
           README.md
         retention-days: 30
@@ -107,7 +107,7 @@ jobs:
       if: startsWith(github.ref, 'refs/tags/')
       run: |
         mkdir -p release
-        cp dist/emergency-alerts-card.js release/
+        cp www/emergency-alerts-card.js release/
         cp hacs.json release/
         cp README.md release/
         cd release
