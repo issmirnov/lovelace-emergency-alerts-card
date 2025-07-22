@@ -72,4 +72,53 @@ GitHub Actions were failing due to inconsistent Node.js versions:
 ✅ All workflows now use Node 18 consistently  
 ✅ CI/CD pipeline should pass reliably  
 ✅ Local development matches CI environment  
-✅ Clear Node.js version requirements documented 
+✅ Clear Node.js version requirements documented
+
+## 2024-12-19 - README Documentation Enhancement
+
+**Author**: AI Assistant  
+**Summary**: Enhanced README with comprehensive configuration options, entity structure, and screenshot documentation  
+**Code Reference**: README.md, docs/screenshots/README.md
+
+### Problem
+User requested comprehensive documentation update including:
+- Complete configuration options explanation
+- Space for screenshots
+- Better examples and usage instructions
+
+### Solution Implemented
+1. **Comprehensive Configuration Section**: Added detailed explanation of all card options
+2. **Configuration Examples**: Multiple practical examples for different use cases
+3. **Entity Structure Documentation**: Clear explanation of expected entity format and attributes
+4. **Services Documentation**: Listed all available services the card calls
+5. **Screenshot Structure**: Created docs/screenshots/ directory with detailed requirements
+6. **Complete Dashboard Example**: Full Lovelace dashboard configuration
+
+### Changes Made
+- `README.md`: Added complete configuration options, examples, entity structure, services
+- `docs/screenshots/README.md`: Created screenshot requirements and guidelines
+- `docs/screenshots/`: Created directory structure for future screenshots
+
+### New Sections Added
+- **Complete Configuration Options**: Display, filtering, action button, and advanced options
+- **Configuration Examples**: 6 different practical examples
+- **Complete Dashboard Example**: Full Lovelace configuration
+- **Expected Entity Structure**: Entity format and required attributes
+- **Available Services**: Service calls for action buttons
+- **Screenshots Section**: Placeholder with planned screenshots list
+
+### Screenshot Requirements
+Created comprehensive screenshot guidelines including:
+- Basic card views (default, compact, grouped)
+- Filtered views (security, critical, active only)
+- Alert states (active, acknowledged, escalated, cleared)
+- Mobile views and responsive design
+- Dashboard examples
+- Technical requirements (resolution, format, quality)
+
+### Result
+✅ Comprehensive documentation covering all card features  
+✅ Clear examples for different use cases  
+✅ Proper entity structure documentation  
+✅ Screenshot framework ready for user contributions  
+✅ Better user experience with detailed configuration guide 

@@ -98,6 +98,239 @@ type: custom:emergency-alerts-card
 summary_entity: sensor.emergency_summary  # Optional: specific summary entity
 ```
 
+### Complete Configuration Options
+
+The Emergency Alerts Card supports extensive configuration options to customize its appearance and behavior:
+
+#### Display Options
+```yaml
+type: custom:emergency-alerts-card
+# Show/hide different alert types
+show_acknowledged: true          # Show acknowledged alerts
+show_cleared: false              # Show cleared alerts  
+show_escalated: true             # Show escalated alerts
+
+# Grouping and sorting
+group_by: "severity"             # "severity", "group", "status", or "none"
+sort_by: "first_triggered"       # "first_triggered", "severity", "name", "group"
+
+# Visual appearance
+compact_mode: false              # More compact display
+show_timestamps: true            # Show "X minutes ago"
+show_group_labels: true          # Show group names
+show_severity_icons: true        # Show severity icons
+max_alerts_per_group: 10         # Limit alerts per group
+```
+
+#### Filtering Options
+```yaml
+type: custom:emergency-alerts-card
+# Filter by severity levels
+severity_filter: ["critical", "warning", "info"]
+
+# Filter by alert groups
+group_filter: ["security", "safety", "environment"]
+
+# Filter by alert status
+status_filter: ["active", "acknowledged", "escalated"]
+```
+
+#### Action Button Options
+```yaml
+type: custom:emergency-alerts-card
+# Show/hide action buttons
+show_acknowledge_button: true    # Show acknowledge button
+show_clear_button: true          # Show clear button  
+show_escalate_button: true       # Show escalate button
+
+# Button appearance
+button_style: "compact"          # "compact", "full", "icons_only"
+```
+
+#### Advanced Options
+```yaml
+type: custom:emergency-alerts-card
+# Custom entity detection patterns
+entity_patterns:
+  - "binary_sensor.emergency_*"
+  - "binary_sensor.*"            # If entity has severity attribute
+
+# Auto-refresh interval in seconds
+refresh_interval: 30
+```
+
+### Configuration Examples
+
+#### Show Only Active Alerts
+```yaml
+type: custom:emergency-alerts-card
+show_acknowledged: false
+show_cleared: false
+status_filter: ["active"]
+```
+
+#### Compact Mobile-Friendly View
+```yaml
+type: custom:emergency-alerts-card
+compact_mode: true
+button_style: "icons_only"
+show_timestamps: false
+max_alerts_per_group: 3
+```
+
+#### Security-Focused Dashboard
+```yaml
+type: custom:emergency-alerts-card
+group_filter: ["security"]
+severity_filter: ["critical", "warning"]
+show_escalate_button: true
+show_acknowledge_button: false
+```
+
+#### Group by Alert Type
+```yaml
+type: custom:emergency-alerts-card
+group_by: "group"
+show_group_labels: true
+```
+
+#### Critical Alerts Only
+```yaml
+type: custom:emergency-alerts-card
+severity_filter: ["critical"]
+show_acknowledge_button: false
+show_escalate_button: false
+```
+
+### Complete Dashboard Example
+
+Here's a complete Lovelace dashboard configuration showing different card variations:
+
+```yaml
+resources:
+  - url: /local/emergency-alerts-card.js
+    type: module
+
+views:
+  - title: Emergency Dashboard
+    cards:
+      # Basic emergency alerts card
+      - type: custom:emergency-alerts-card
+        summary_entity: sensor.emergency_summary
+      
+      # Compact view for mobile
+      - type: custom:emergency-alerts-card
+        compact_mode: true
+        show_timestamps: false
+        button_style: "icons_only"
+        max_alerts_per_group: 5
+      
+      # Grouped by status
+      - type: custom:emergency-alerts-card
+        group_by: "status"
+        show_acknowledged: true
+        show_cleared: true
+        title: "Alert Status Overview"
+      
+      # Security-focused view
+      - type: custom:emergency-alerts-card
+        group_by: "group"
+        group_filter: ["security"]
+        severity_filter: ["critical", "warning"]
+        title: "Security Alerts"
+```
+
+## Expected Entity Structure
+
+The Emergency Alerts Card expects binary sensors with specific attributes from the Emergency Alerts Integration:
+
+### Entity Format
+```yaml
+# Entity ID pattern
+binary_sensor.emergency_[alert_name]
+
+# Example entities
+binary_sensor.emergency_fire_alarm
+binary_sensor.emergency_door_open
+binary_sensor.emergency_water_leak
+```
+
+### Required Attributes
+```yaml
+# State
+state: 'on' (alert active) or 'off' (alert cleared)
+
+# Required attributes
+friendly_name: "Emergency: Fire Alarm Triggered"
+severity: "critical" | "warning" | "info"
+group: "security" | "safety" | "environmental" | "maintenance"
+
+# Status tracking
+acknowledged: boolean
+escalated: boolean
+cleared: boolean
+first_triggered: "2024-12-19T10:30:00Z"  # ISO datetime string
+last_cleared: "2024-12-19T11:00:00Z"     # ISO datetime string (optional)
+```
+
+### Example Entity
+```yaml
+binary_sensor.emergency_fire_alarm:
+  state: 'on'
+  friendly_name: "Emergency: Fire Alarm Triggered"
+  severity: "critical"
+  group: "safety"
+  acknowledged: false
+  escalated: false
+  cleared: false
+  first_triggered: "2024-12-19T10:30:00Z"
+```
+
+## Available Services
+
+The Emergency Alerts Card calls these services when action buttons are clicked:
+
+### Acknowledge Alert
+```yaml
+service: emergency_alerts.acknowledge
+data:
+  entity_id: binary_sensor.emergency_fire_alarm
+```
+
+### Escalate Alert
+```yaml
+service: emergency_alerts.escalate
+data:
+  entity_id: binary_sensor.emergency_fire_alarm
+```
+
+### Clear Alert
+```yaml
+service: emergency_alerts.clear
+data:
+  entity_id: binary_sensor.emergency_fire_alarm
+```
+
+### De-escalate Alert
+```yaml
+service: emergency_alerts.de_escalate
+data:
+  entity_id: binary_sensor.emergency_fire_alarm
+```
+
+## Screenshots
+
+> **Note**: Screenshots will be added to the `docs/screenshots/` directory. These will show the card in various configurations and states.
+
+### Planned Screenshots
+- **Basic Card**: Default configuration showing mixed alert types
+- **Compact Mode**: Mobile-friendly compact display
+- **Grouped View**: Alerts grouped by severity/status/group
+- **Action Buttons**: Different button styles (compact, full, icons_only)
+- **Filtered Views**: Security-only, critical-only, etc.
+- **Alert States**: Active, acknowledged, escalated, cleared states
+- **Mobile View**: Card appearance on mobile devices
+
 ## Development
 
 ### Setup
