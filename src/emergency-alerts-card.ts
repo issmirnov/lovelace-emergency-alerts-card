@@ -674,41 +674,39 @@ export class EmergencyAlertsCard extends LitElement {
                   ${alert.state === 'on' && this._shouldShowActions(alert)
                     ? html`
                         <div class="action-buttons">
-                          ${this.config?.show_acknowledge_button && !alert.acknowledged && !alert.escalated
+                          ${this.config?.show_acknowledge_button &&
+                          !alert.acknowledged &&
+                          !alert.escalated
                             ? html`
                                 <button
                                   class="action-btn acknowledge-btn"
                                   @click="${() => this._handleAcknowledge(alert.entity_id)}"
                                 >
-                                  ${this.config?.button_style === 'icons_only'
-                                    ? '✓'
-                                    : 'ACK'}
+                                  ${this.config?.button_style === 'icons_only' ? '✓' : 'ACK'}
                                 </button>
                               `
                             : ''}
                           ${this.config?.show_escalate_button && !alert.cleared
-                            ? (
-                                alert.escalated
-                                  ? html`
-                                      <button
-                                        class="action-btn de-escalate-btn"
-                                        @click="${() => this._handleDeEscalate(alert.entity_id)}"
-                                      >
-                                        ${this.config?.button_style === 'icons_only' ? '↓' : 'DE-ESC'}
-                                      </button>
-                                    `
-                                  : (!alert.acknowledged && !alert.escalated
-                                      ? html`
-                                          <button
-                                            class="action-btn escalate-btn"
-                                            @click="${() => this._handleEscalate(alert.entity_id)}"
-                                          >
-                                            ${this.config?.button_style === 'icons_only' ? '↑' : 'ESC'}
-                                          </button>
-                                        `
-                                      : '')
-                                )
-                              : ''}
+                            ? alert.escalated
+                              ? html`
+                                  <button
+                                    class="action-btn de-escalate-btn"
+                                    @click="${() => this._handleDeEscalate(alert.entity_id)}"
+                                  >
+                                    ${this.config?.button_style === 'icons_only' ? '↓' : 'DE-ESC'}
+                                  </button>
+                                `
+                              : !alert.acknowledged && !alert.escalated
+                                ? html`
+                                    <button
+                                      class="action-btn escalate-btn"
+                                      @click="${() => this._handleEscalate(alert.entity_id)}"
+                                    >
+                                      ${this.config?.button_style === 'icons_only' ? '↑' : 'ESC'}
+                                    </button>
+                                  `
+                                : ''
+                            : ''}
                           ${this.config?.show_clear_button
                             ? html`
                                 <button
@@ -1031,23 +1029,27 @@ export class EmergencyAlertsCardEditor extends LitElement {
     const summaryEntities = Object.values(this.hass.states)
       .filter((entity: any) => {
         const entityId = entity.entity_id;
-        return entityId.startsWith('sensor.emergency_alerts') && 
-               (entityId.includes('summary') || entityId.includes('Summary'));
+        return (
+          entityId.startsWith('sensor.emergency_alerts') &&
+          (entityId.includes('summary') || entityId.includes('Summary'))
+        );
       })
       .sort((a: any, b: any) => a.entity_id.localeCompare(b.entity_id));
 
-    return summaryEntities.map((entity: any) => html`
-      <mwc-list-item value="${entity.entity_id}">
-        ${entity.attributes?.friendly_name || entity.entity_id}
-      </mwc-list-item>
-    `);
+    return summaryEntities.map(
+      (entity: any) => html`
+        <mwc-list-item value="${entity.entity_id}">
+          ${entity.attributes?.friendly_name || entity.entity_id}
+        </mwc-list-item>
+      `
+    );
   }
 
   private _getSeverityOptions() {
     return [
       { value: 'critical', label: 'Critical' },
       { value: 'warning', label: 'Warning' },
-      { value: 'info', label: 'Info' }
+      { value: 'info', label: 'Info' },
     ];
   }
 
@@ -1056,7 +1058,7 @@ export class EmergencyAlertsCardEditor extends LitElement {
       { value: 'active', label: 'Active' },
       { value: 'acknowledged', label: 'Acknowledged' },
       { value: 'escalated', label: 'Escalated' },
-      { value: 'cleared', label: 'Cleared' }
+      { value: 'cleared', label: 'Cleared' },
     ];
   }
 
@@ -1070,29 +1072,39 @@ export class EmergencyAlertsCardEditor extends LitElement {
       }
     });
 
-    return Array.from(groups).sort().map(group => ({
-      value: group,
-      label: group.charAt(0).toUpperCase() + group.slice(1)
-    }));
+    return Array.from(groups)
+      .sort()
+      .map(group => ({
+        value: group,
+        label: group.charAt(0).toUpperCase() + group.slice(1),
+      }));
   }
 
-  private _renderMultiSelectEditor(field: string, label: string, options: Array<{value: string, label: string}>, helpText?: string) {
+  private _renderMultiSelectEditor(
+    field: string,
+    label: string,
+    options: Array<{ value: string; label: string }>,
+    helpText?: string
+  ) {
     const selectedValues = (this.config as any)?.[field] || [];
-    
+
     return html`
       <div class="field">
         <label>${label}</label>
         <div class="field-input">
           <div class="multi-select-container">
-            ${options.map(option => html`
-              <div class="checkbox-item">
-                <ha-checkbox
-                  .checked=${selectedValues.includes(option.value)}
-                  @change=${(e: any) => this._toggleFilterValue(field, option.value, e.target.checked)}
-                ></ha-checkbox>
-                <span class="checkbox-label">${option.label}</span>
-              </div>
-            `)}
+            ${options.map(
+              option => html`
+                <div class="checkbox-item">
+                  <ha-checkbox
+                    .checked=${selectedValues.includes(option.value)}
+                    @change=${(e: any) =>
+                      this._toggleFilterValue(field, option.value, e.target.checked)}
+                  ></ha-checkbox>
+                  <span class="checkbox-label">${option.label}</span>
+                </div>
+              `
+            )}
           </div>
           ${helpText ? html`<div class="help-text">${helpText}</div>` : ''}
         </div>
