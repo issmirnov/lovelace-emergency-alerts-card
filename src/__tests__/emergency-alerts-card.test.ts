@@ -170,4 +170,21 @@ describe('EmergencyAlertsCard', () => {
     // Should not throw error
     await expect(card._handleEscalate('test_entity')).resolves.toBeUndefined();
   });
+
+  test('should handle de-escalate action', async () => {
+    const entityId = 'binary_sensor.emergency_door_open';
+
+    await card._handleDeEscalate(entityId);
+
+    expect(mockHass.callService).toHaveBeenCalledWith('emergency_alerts', 'acknowledge', {
+      entity_id: entityId,
+    });
+  });
+
+  test('should handle de-escalate action without hass', async () => {
+    card.hass = undefined;
+
+    // Should not throw error
+    await expect(card._handleDeEscalate('test_entity')).resolves.toBeUndefined();
+  });
 });

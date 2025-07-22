@@ -162,6 +162,46 @@ export class EmergencyAlertsCard extends LitElement {
       display: flex;
       gap: 8px;
       margin-left: auto;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    /* Responsive design for narrow columns */
+    @media (max-width: 600px) {
+      .action-buttons {
+        flex-direction: column;
+        gap: 4px;
+        margin-left: 0;
+        margin-top: 8px;
+        width: 100%;
+      }
+
+      .action-btn {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .alert-item {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .alert-content {
+        margin-right: 0;
+        margin-bottom: 8px;
+      }
+    }
+
+    /* For very narrow columns (mobile) */
+    @media (max-width: 400px) {
+      .action-buttons {
+        gap: 3px;
+      }
+
+      .action-btn {
+        padding: 5px 8px;
+        font-size: 0.75em;
+      }
     }
 
     .action-btn {
@@ -200,6 +240,11 @@ export class EmergencyAlertsCard extends LitElement {
       color: white;
     }
 
+    .de-escalate-btn {
+      background: var(--warning-color, #ff9800);
+      color: white;
+    }
+
     .alert-content {
       flex: 1;
       margin-right: 12px;
@@ -232,6 +277,18 @@ export class EmergencyAlertsCard extends LitElement {
     .compact .action-btn {
       padding: 4px 8px;
       font-size: 0.7em;
+    }
+
+    /* Compact mode responsive adjustments */
+    @media (max-width: 600px) {
+      .compact .action-buttons {
+        gap: 3px;
+      }
+
+      .compact .action-btn {
+        padding: 3px 6px;
+        font-size: 0.65em;
+      }
     }
 
     .no-alerts {
@@ -482,6 +539,12 @@ export class EmergencyAlertsCard extends LitElement {
     await this.hass.callService('emergency_alerts', 'escalate', { entity_id });
   }
 
+  public async _handleDeEscalate(entity_id: string): Promise<void> {
+    if (!this.hass) return;
+    // For de-escalation, we can use the acknowledge service to reset the escalated state
+    await this.hass.callService('emergency_alerts', 'acknowledge', { entity_id });
+  }
+
   public _formatTimeAgo(iso: string): string {
     if (!iso) return '';
     const now = new Date();
@@ -611,7 +674,7 @@ export class EmergencyAlertsCard extends LitElement {
                   ${alert.state === 'on' && this._shouldShowActions(alert)
                     ? html`
                         <div class="action-buttons">
-                          ${this.config?.show_acknowledge_button && !alert.acknowledged
+                          ${this.config?.show_acknowledge_button && !alert.acknowledged && !alert.escalated
                             ? html`
                                 <button
                                   class="action-btn acknowledge-btn"
@@ -619,17 +682,21 @@ export class EmergencyAlertsCard extends LitElement {
                                 >
                                   ${this.config?.button_style === 'icons_only'
                                     ? '✓'
-                                    : 'Acknowledge'}
+                                    : 'ACK'}
                                 </button>
                               `
                             : ''}
                           ${this.config?.show_escalate_button
                             ? html`
                                 <button
-                                  class="action-btn escalate-btn"
-                                  @click="${() => this._handleEscalate(alert.entity_id)}"
+                                  class="action-btn ${alert.escalated ? 'de-escalate-btn' : 'escalate-btn'}"
+                                  @click="${() => alert.escalated 
+                                    ? this._handleDeEscalate(alert.entity_id) 
+                                    : this._handleEscalate(alert.entity_id)}"
                                 >
-                                  ${this.config?.button_style === 'icons_only' ? '↑' : 'Escalate'}
+                                  ${this.config?.button_style === 'icons_only' 
+                                    ? (alert.escalated ? '↓' : '↑') 
+                                    : (alert.escalated ? 'DE-ESC' : 'ESC')}
                                 </button>
                               `
                             : ''}
@@ -639,7 +706,7 @@ export class EmergencyAlertsCard extends LitElement {
                                   class="action-btn clear-btn"
                                   @click="${() => this._handleClear(alert.entity_id)}"
                                 >
-                                  ${this.config?.button_style === 'icons_only' ? '×' : 'Clear'}
+                                  ${this.config?.button_style === 'icons_only' ? '×' : 'CLR'}
                                 </button>
                               `
                             : ''}
@@ -666,7 +733,7 @@ export class EmergencyAlertsCard extends LitElement {
 
   static getStubConfig(): CardConfig {
     return {
-      type: 'emergency-alerts-card',
+      type: 'custom:emergency-alerts-card',
       summary_entity: '',
       show_acknowledged: true,
       show_cleared: false,
@@ -755,6 +822,37 @@ export class EmergencyAlertsCardEditor extends LitElement {
       margin-left: auto;
     }
 
+    .multi-select-container {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid var(--divider-color, #e0e0e0);
+      border-radius: 4px;
+      padding: 8px;
+    }
+
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 0;
+    }
+
+    .checkbox-label {
+      font-size: 0.9em;
+      color: var(--primary-text-color);
+      cursor: pointer;
+    }
+
+    .checkbox-item:hover {
+      background: var(--secondary-background-color, #f5f5f5);
+      border-radius: 4px;
+      padding: 4px 8px;
+      margin: 0 -8px;
+    }
+
     .checkbox-list {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -814,30 +912,62 @@ export class EmergencyAlertsCardEditor extends LitElement {
   private _valueChanged(field: string, value: any): void {
     if (!this.config) return;
 
-    const newConfig = { ...this.config };
+    try {
+      const newConfig = { ...this.config };
 
-    // Handle nested object updates
-    if (field.includes('.')) {
-      const [parent, child] = field.split('.');
-      const parentKey = parent as keyof CardConfig;
-      const parentValue = newConfig[parentKey];
+      // Handle nested object updates
+      if (field.includes('.')) {
+        const [parent, child] = field.split('.');
+        const parentKey = parent as keyof CardConfig;
+        const parentValue = newConfig[parentKey];
 
-      if (parentValue && typeof parentValue === 'object') {
-        (newConfig[parentKey] as any) = {
-          ...parentValue,
-          [child]: value,
-        };
+        if (parentValue && typeof parentValue === 'object') {
+          (newConfig[parentKey] as any) = {
+            ...parentValue,
+            [child]: value,
+          };
+        } else {
+          (newConfig[parentKey] as any) = {
+            [child]: value,
+          };
+        }
       } else {
-        (newConfig[parentKey] as any) = {
-          [child]: value,
-        };
+        // Type-safe assignment for known fields
+        switch (field) {
+          case 'button_style':
+            if (['compact', 'full', 'icons_only'].includes(value)) {
+              (newConfig as any)[field] = value;
+            } else {
+              console.warn(`Invalid button_style value: ${value}`);
+              return;
+            }
+            break;
+          case 'group_by':
+            if (['severity', 'group', 'status', 'none'].includes(value)) {
+              (newConfig as any)[field] = value;
+            } else {
+              console.warn(`Invalid group_by value: ${value}`);
+              return;
+            }
+            break;
+          case 'sort_by':
+            if (['first_triggered', 'severity', 'name', 'group'].includes(value)) {
+              (newConfig as any)[field] = value;
+            } else {
+              console.warn(`Invalid sort_by value: ${value}`);
+              return;
+            }
+            break;
+          default:
+            (newConfig as any)[field] = value;
+        }
       }
-    } else {
-      (newConfig as any)[field] = value;
-    }
 
-    this.config = newConfig;
-    this._fireConfigChanged();
+      this.config = newConfig;
+      this._fireConfigChanged();
+    } catch (error) {
+      console.error(`Error updating field ${field}:`, error);
+    }
   }
 
   private _fireConfigChanged(): void {
@@ -869,6 +999,96 @@ export class EmergencyAlertsCardEditor extends LitElement {
     const newArray = [...currentArray];
     newArray[index] = value;
     this._updateStringArray(field, newArray);
+  }
+
+  private _toggleFilterValue(field: string, value: string, checked: boolean): void {
+    const currentArray = (this.config as any)?.[field] || [];
+    let newArray: string[];
+
+    if (checked) {
+      // Add value if not already present
+      newArray = currentArray.includes(value) ? currentArray : [...currentArray, value];
+    } else {
+      // Remove value if present
+      newArray = currentArray.filter((v: string) => v !== value);
+    }
+
+    this._updateStringArray(field, newArray);
+  }
+
+  private _getSummaryEntityOptions() {
+    if (!this.hass) return [];
+
+    const summaryEntities = Object.values(this.hass.states)
+      .filter((entity: any) => {
+        const entityId = entity.entity_id;
+        return entityId.startsWith('sensor.emergency_alerts') && 
+               (entityId.includes('summary') || entityId.includes('Summary'));
+      })
+      .sort((a: any, b: any) => a.entity_id.localeCompare(b.entity_id));
+
+    return summaryEntities.map((entity: any) => html`
+      <mwc-list-item value="${entity.entity_id}">
+        ${entity.attributes?.friendly_name || entity.entity_id}
+      </mwc-list-item>
+    `);
+  }
+
+  private _getSeverityOptions() {
+    return [
+      { value: 'critical', label: 'Critical' },
+      { value: 'warning', label: 'Warning' },
+      { value: 'info', label: 'Info' }
+    ];
+  }
+
+  private _getStatusOptions() {
+    return [
+      { value: 'active', label: 'Active' },
+      { value: 'acknowledged', label: 'Acknowledged' },
+      { value: 'escalated', label: 'Escalated' },
+      { value: 'cleared', label: 'Cleared' }
+    ];
+  }
+
+  private _getGroupOptions() {
+    if (!this.hass) return [];
+
+    const groups = new Set<string>();
+    Object.values(this.hass.states).forEach((entity: any) => {
+      if (entity.attributes?.group) {
+        groups.add(entity.attributes.group);
+      }
+    });
+
+    return Array.from(groups).sort().map(group => ({
+      value: group,
+      label: group.charAt(0).toUpperCase() + group.slice(1)
+    }));
+  }
+
+  private _renderMultiSelectEditor(field: string, label: string, options: Array<{value: string, label: string}>, helpText?: string) {
+    const selectedValues = (this.config as any)?.[field] || [];
+    
+    return html`
+      <div class="field">
+        <label>${label}</label>
+        <div class="field-input">
+          <div class="multi-select-container">
+            ${options.map(option => html`
+              <div class="checkbox-item">
+                <ha-checkbox
+                  .checked=${selectedValues.includes(option.value)}
+                  @change=${(e: any) => this._toggleFilterValue(field, option.value, e.target.checked)}
+                ></ha-checkbox>
+                <span class="checkbox-label">${option.label}</span>
+              </div>
+            `)}
+          </div>
+          ${helpText ? html`<div class="help-text">${helpText}</div>` : ''}
+        </div>
+      </div>
+    `;
   }
 
   private _renderStringArrayEditor(field: string, label: string, helpText?: string) {
@@ -921,11 +1141,16 @@ export class EmergencyAlertsCardEditor extends LitElement {
           <div class="field">
             <label>Summary Entity</label>
             <div class="field-input">
-              <ha-textfield
+              <ha-select
                 .value=${this.config.summary_entity || ''}
-                @input=${(e: any) => this._valueChanged('summary_entity', e.target.value)}
-                placeholder="sensor.emergency_summary"
-              ></ha-textfield>
+                @change=${(e: Event) => {
+                  const target = e.target as any;
+                  this._valueChanged('summary_entity', target.value);
+                }}
+              >
+                <mwc-list-item value="">Auto-detect (recommended)</mwc-list-item>
+                ${this._getSummaryEntityOptions()}
+              </ha-select>
               <div class="help-text">Optional: Entity that provides summary information</div>
             </div>
           </div>
@@ -1092,20 +1317,23 @@ export class EmergencyAlertsCardEditor extends LitElement {
         <div class="section">
           <div class="section-header">Filtering</div>
 
-          ${this._renderStringArrayEditor(
+          ${this._renderMultiSelectEditor(
             'severity_filter',
             'Severity Filter',
-            'Which severity levels to show (critical, warning, info)'
+            this._getSeverityOptions(),
+            'Select which severity levels to show (leave all unchecked to show all)'
           )}
-          ${this._renderStringArrayEditor(
+          ${this._renderMultiSelectEditor(
             'group_filter',
             'Group Filter',
-            'Which alert groups to show (leave empty to show all)'
+            this._getGroupOptions(),
+            'Select which alert groups to show (leave all unchecked to show all)'
           )}
-          ${this._renderStringArrayEditor(
+          ${this._renderMultiSelectEditor(
             'status_filter',
             'Status Filter',
-            'Which statuses to show (active, acknowledged, escalated, cleared)'
+            this._getStatusOptions(),
+            'Select which statuses to show (leave all unchecked to show all)'
           )}
         </div>
 
