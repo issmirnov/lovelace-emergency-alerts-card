@@ -1,13 +1,14 @@
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import typescript from '@rollup/plugin-typescript';
+import terser from '@rollup/plugin-terser';
 
 export default {
   input: 'src/emergency-alerts-card.ts',
   output: {
-    file: 'dist/emergency-alerts-card.js',
+    file: 'www/emergency-alerts-card.js',
     format: 'es',
-    sourcemap: true
+    inlineDynamicImports: true
   },
   plugins: [
     resolve({
@@ -17,8 +18,9 @@ export default {
     commonjs(),
     typescript({
       tsconfig: 'tsconfig.json',
-      sourceMap: true
-    })
+      sourceMap: false
+    }),
+    terser()
   ],
   external: []
 }; 

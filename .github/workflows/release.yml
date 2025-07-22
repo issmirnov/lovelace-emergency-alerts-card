@@ -39,7 +39,7 @@ jobs:
         mkdir -p release
         
         # Copy required files for HACS
-        cp dist/emergency-alerts-card.js release/
+        cp www/emergency-alerts-card.js release/
         cp hacs.json release/
         cp README.md release/
         

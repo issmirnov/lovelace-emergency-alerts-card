@@ -2,11 +2,11 @@
   "name": "emergency-alerts-card",
   "version": "1.0.0",
   "description": "A custom Lovelace card for Emergency Alerts integration",
-  "main": "dist/emergency-alerts-card.js",
+  "main": "www/emergency-alerts-card.js",
   "scripts": {
     "build": "rollup -c",
     "build:deploy": "npm run build && npm run deploy",
-    "deploy": "cp dist/emergency-alerts-card.js ../emergency-alerts-integration/config/www/",
+    "deploy": "cp www/emergency-alerts-card.js ../emergency-alerts-integration/config/www/",
     "dev": "rollup -c -w",
     "dev:deploy": "npm run build:deploy && npm run dev:watch",
     "dev:watch": "rollup -c -w --watch.onStart=\"npm run deploy\"",
@@ -33,6 +33,7 @@
   "devDependencies": {
     "@rollup/plugin-commonjs": "^25.0.0",
     "@rollup/plugin-node-resolve": "^15.0.0",
+    "@rollup/plugin-terser": "^0.4.4",
     "@rollup/plugin-typescript": "^11.0.0",
     "@types/jest": "^29.0.0",
     "@typescript-eslint/eslint-plugin": "^8.35.0",
