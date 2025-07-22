@@ -3,6 +3,5 @@
   "render_readme": true,
   "content_in_root": true,
   "filename": "www/emergency-alerts-card.js",
-  "homeassistant": "2023.8.0",
-  "repository": "issmirnov/lovelace-emergency-alerts-card"
+  "homeassistant": "2023.8.0"
 } 
