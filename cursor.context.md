@@ -45,7 +45,7 @@ The Emergency Alerts Card needed to be made HACS compliant for publication. Key 
 - **.gitignore**: Added www/ directory exceptions
 - **.github/workflows/commit-built-card.yml**: New workflow for auto-commit
 - **.github/workflows/release.yml**: Updated packaging paths
-- **www/emergency-alerts-card.js**: Built and committed card file
+- **dist/emergency-alerts-card.js**: Built and committed card file
 
 ### Technical Details
 - **Build Output**: Now generates minified, optimized card in www/ directory

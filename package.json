@@ -16,7 +16,8 @@
     "format": "prettier --write src",
     "format:check": "prettier --check src",
     "validate:hacs": "./validate-hacs.sh",
-    "validate:hacs:official": "./validate-hacs-official.sh"
+    "validate:hacs:official": "./validate-hacs-official.sh",
+    "test:hacs": "./test-hacs-requirements.sh"
   },
   "keywords": [
     "homeassistant",
