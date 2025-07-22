@@ -1,0 +1,225 @@
+name: HACS Validation
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+  workflow_dispatch:
+
+jobs:
+  hacs-validation:
+    name: HACS Validation
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Node.js 22
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22
+        cache: 'npm'
+        cache-dependency-path: package-lock.json
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build card
+      run: npm run build
+
+    - name: Validate HACS requirements
+      run: |
+        echo "🔍 Validating HACS requirements..."
+        
+        # Check if hacs.json exists
+        if [ ! -f "hacs.json" ]; then
+          echo "❌ hacs.json is missing"
+          exit 1
+        fi
+        echo "✅ hacs.json exists"
+        
+        # Validate hacs.json structure
+        if ! jq empty hacs.json 2>/dev/null; then
+          echo "❌ hacs.json is not valid JSON"
+          exit 1
+        fi
+        echo "✅ hacs.json is valid JSON"
+        
+        # Check required fields in hacs.json
+        if ! jq -e '.name' hacs.json >/dev/null 2>&1; then
+          echo "❌ hacs.json missing 'name' field"
+          exit 1
+        fi
+        echo "✅ hacs.json has 'name' field"
+        
+        if ! jq -e '.type' hacs.json >/dev/null 2>&1; then
+          echo "❌ hacs.json missing 'type' field"
+          exit 1
+        fi
+        echo "✅ hacs.json has 'type' field"
+        
+        # Check if type is 'lovelace' for cards
+        if [ "$(jq -r '.type' hacs.json)" != "lovelace" ]; then
+          echo "❌ hacs.json type should be 'lovelace' for cards"
+          exit 1
+        fi
+        echo "✅ hacs.json type is 'lovelace'"
+        
+        # Check if content_in_root is true (required for cards)
+        if [ "$(jq -r '.content_in_root' hacs.json)" != "true" ]; then
+          echo "❌ hacs.json content_in_root should be true for cards"
+          exit 1
+        fi
+        echo "✅ hacs.json content_in_root is true"
+
+    - name: Validate build output
+      run: |
+        echo "🔍 Validating build output..."
+        
+        # Check if the main card file exists
+        if [ ! -f "dist/emergency-alerts-card.js" ]; then
+          echo "❌ Main card file not found in dist/"
+          exit 1
+        fi
+        echo "✅ Main card file exists"
+        
+        # Check file size (should be reasonable)
+        file_size=$(stat -c%s "dist/emergency-alerts-card.js")
+        if [ "$file_size" -lt 1000 ]; then
+          echo "❌ Card file seems too small ($file_size bytes)"
+          exit 1
+        fi
+        echo "✅ Card file size is reasonable ($file_size bytes)"
+        
+        # Check if file contains expected content
+        if ! grep -q "customElements.define" dist/emergency-alerts-card.js; then
+          echo "❌ Card file doesn't contain customElements.define"
+          exit 1
+        fi
+        echo "✅ Card file contains customElements.define"
+
+    - name: Validate README
+      run: |
+        echo "🔍 Validating README..."
+        
+        # Check if README exists
+        if [ ! -f "README.md" ]; then
+          echo "❌ README.md is missing"
+          exit 1
+        fi
+        echo "✅ README.md exists"
+        
+        # Check README size (should be substantial)
+        readme_size=$(stat -c%s "README.md")
+        if [ "$readme_size" -lt 500 ]; then
+          echo "❌ README.md seems too small ($readme_size bytes)"
+          exit 1
+        fi
+        echo "✅ README.md size is reasonable ($readme_size bytes)"
+        
+        # Check for installation instructions
+        if ! grep -qi "install" README.md; then
+          echo "❌ README.md should contain installation instructions"
+          exit 1
+        fi
+        echo "✅ README.md contains installation instructions"
+        
+        # Check for configuration examples
+        if ! grep -qi "config" README.md; then
+          echo "❌ README.md should contain configuration examples"
+          exit 1
+        fi
+        echo "✅ README.md contains configuration examples"
+
+    - name: Validate package.json
+      run: |
+        echo "🔍 Validating package.json..."
+        
+        # Check if package.json exists
+        if [ ! -f "package.json" ]; then
+          echo "❌ package.json is missing"
+          exit 1
+        fi
+        echo "✅ package.json exists"
+        
+        # Validate package.json structure
+        if ! jq empty package.json 2>/dev/null; then
+          echo "❌ package.json is not valid JSON"
+          exit 1
+        fi
+        echo "✅ package.json is valid JSON"
+        
+        # Check for required fields
+        if ! jq -e '.name' package.json >/dev/null 2>&1; then
+          echo "❌ package.json missing 'name' field"
+          exit 1
+        fi
+        echo "✅ package.json has 'name' field"
+        
+        if ! jq -e '.version' package.json >/dev/null 2>&1; then
+          echo "❌ package.json missing 'version' field"
+          exit 1
+        fi
+        echo "✅ package.json has 'version' field"
+        
+        if ! jq -e '.description' package.json >/dev/null 2>&1; then
+          echo "❌ package.json missing 'description' field"
+          exit 1
+        fi
+        echo "✅ package.json has 'description' field"
+
+    - name: Check for license
+      run: |
+        echo "🔍 Checking for license..."
+        
+        # Check for LICENSE file
+        if [ ! -f "LICENSE" ]; then
+          echo "⚠️  LICENSE file not found (recommended for HACS)"
+        else
+          echo "✅ LICENSE file exists"
+        fi
+        
+        # Check package.json for license field
+        if ! jq -e '.license' package.json >/dev/null 2>&1; then
+          echo "⚠️  package.json missing 'license' field (recommended)"
+        else
+          echo "✅ package.json has 'license' field"
+        fi
+
+    - name: Validate repository structure
+      run: |
+        echo "🔍 Validating repository structure..."
+        
+        # Check for source directory
+        if [ ! -d "src" ]; then
+          echo "❌ src/ directory is missing"
+          exit 1
+        fi
+        echo "✅ src/ directory exists"
+        
+        # Check for main source file
+        if [ ! -f "src/emergency-alerts-card.ts" ]; then
+          echo "❌ Main source file src/emergency-alerts-card.ts is missing"
+          exit 1
+        fi
+        echo "✅ Main source file exists"
+        
+        # Check for TypeScript config
+        if [ ! -f "tsconfig.json" ]; then
+          echo "❌ tsconfig.json is missing"
+          exit 1
+        fi
+        echo "✅ tsconfig.json exists"
+        
+        # Check for rollup config
+        if [ ! -f "rollup.config.js" ]; then
+          echo "❌ rollup.config.js is missing"
+          exit 1
+        fi
+        echo "✅ rollup.config.js exists"
+
+    - name: HACS Validation Complete
+      run: |
+        echo "🎉 All HACS validation checks passed!"
+        echo "✅ Repository is HACS compliant" 

@@ -2,5 +2,8 @@
   "name": "Emergency Alerts Card",
   "content_in_root": true,
   "type": "lovelace",
-  "description": "Custom Lovelace card to show emergency alert sensors."
+  "description": "Custom Lovelace card to show emergency alert sensors.",
+  "render_readme": true,
+  "homeassistant": "2023.8.0",
+  "repository": "issmirnov/lovelace-emergency-alerts-card"
 } 

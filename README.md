@@ -1,6 +1,7 @@
 # Emergency Alerts Card
 
 [![Test Emergency Alerts Card](https://github.com/issmirnov/lovelace-emergency-alerts-card/actions/workflows/test.yml/badge.svg)](https://github.com/issmirnov/lovelace-emergency-alerts-card/actions/workflows/test.yml)
+[![HACS Validation](https://github.com/issmirnov/lovelace-emergency-alerts-card/actions/workflows/hacs-validation.yml/badge.svg)](https://github.com/issmirnov/lovelace-emergency-alerts-card/actions/workflows/hacs-validation.yml)
 [![codecov](https://codecov.io/gh/issmirnov/lovelace-emergency-alerts-card/branch/main/graph/badge.svg)](https://codecov.io/gh/issmirnov/lovelace-emergency-alerts-card)
 
 A custom Lovelace card for displaying emergency alerts from the Emergency Alerts integration.
@@ -45,14 +46,33 @@ This logic ensures you always see the right actions for the alert's current stat
 
 This card requires the [Emergency Alerts Integration](https://github.com/issmirnov/emergency-alerts-integration) to be installed and configured in your Home Assistant instance.
 
+### Required Components
+1. **Emergency Alerts Integration** - Creates the alert sensors and entities
+2. **Emergency Alerts Card** - Displays and manages the alerts (this component)
+
+### Installation Order
+1. Install the Emergency Alerts Integration first
+2. Configure some alerts in your Home Assistant instance
+3. Install this Emergency Alerts Card
+4. Add the card to your Lovelace dashboard
+
 ## Installation
 
 ### Via HACS (Recommended)
+
+#### Step 1: Install Emergency Alerts Integration
 1. Open HACS in your Home Assistant instance
-2. Go to "Frontend"
-3. Click the "+" button and search for "Emergency Alerts Card"
-4. Install the card
-5. Add the card to your Lovelace dashboard
+2. Go to "Integrations"
+3. Click the "+" button and search for "Emergency Alerts"
+4. Install the integration
+5. Restart Home Assistant
+6. Add the integration via **Settings** → **Devices & Services**
+
+#### Step 2: Install Emergency Alerts Card
+1. In HACS, go to "Frontend"
+2. Click the "+" button and search for "Emergency Alerts Card"
+3. Install the card
+4. Add the card to your Lovelace dashboard
 
 ### Manual Installation
 1. Download the latest `emergency-alerts-card.js` from the [releases page](https://github.com/issmirnov/lovelace-emergency-alerts-card/releases)
@@ -148,6 +168,23 @@ npm run format
 
 # Check formatting
 npm run format:check
+```
+
+### HACS Validation
+```bash
+# Run HACS validation locally
+./validate-hacs.sh
+
+# Or using npm script
+npm run validate:hacs
+
+# This will check:
+# - hacs.json structure and required fields
+# - package.json requirements
+# - README.md content and size
+# - Repository structure
+# - Build output validation
+# - Test execution
 ```
 
 ## Contributing
