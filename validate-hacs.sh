@@ -65,8 +65,8 @@ for field in "${required_fields[@]}"; do
 done
 
 # Check specific values
-if [ "$(jq -r '.type' hacs.json)" != "lovelace" ]; then
-    print_status "FAIL" "hacs.json type should be 'lovelace' for cards"
+if [ "$(jq -r '.type' hacs.json)" != "dashboard" ]; then
+    print_status "FAIL" "hacs.json type should be 'dashboard' for cards (HACS 2024+ schema)"
     exit 1
 fi
 

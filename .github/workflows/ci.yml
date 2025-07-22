@@ -59,12 +59,12 @@ jobs:
         fi
         echo "✅ hacs.json has 'type' field"
         
-        # Check if type is 'lovelace' for cards
-        if [ "$(jq -r '.type' hacs.json)" != "lovelace" ]; then
-          echo "❌ hacs.json type should be 'lovelace' for cards"
+        # Check if type is 'dashboard' for cards (HACS 2024+ schema)
+        if [ "$(jq -r '.type' hacs.json)" != "dashboard" ]; then
+          echo "❌ hacs.json type should be 'dashboard' for cards (HACS 2024+ schema)"
           exit 1
         fi
-        echo "✅ hacs.json type is 'lovelace'"
+        echo "✅ hacs.json type is 'dashboard'"
         
         # Check if content_in_root is true (required for cards)
         if [ "$(jq -r '.content_in_root' hacs.json)" != "true" ]; then

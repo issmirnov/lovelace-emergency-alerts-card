@@ -210,4 +210,55 @@ Cannot use import statement outside a module
 ✅ CI builds pass with Node 20 (matching local environment)  
 ✅ HACS validation passes locally and will pass in CI  
 ✅ Preserved working Home Assistant compatibility  
-✅ No module system changes that could break functionality 
+✅ No module system changes that could break functionality
+
+## 2024-12-19 - HACS Schema Update for 2024+ Compatibility
+
+**Author**: AI Assistant  
+**Summary**: Updated HACS configuration to use new "dashboard" type instead of deprecated "lovelace"  
+**Code Reference**: hacs.json, validate-hacs.sh, ci.yml, README.md, HACS_COMPLIANCE.md
+
+### Problem
+User reported HACS validation still not working despite selecting "Dashboard" category. Investigation revealed:
+- **HACS 2024+ renamed categories**: "Frontend" → "Dashboard" for Lovelace cards
+- **Schema change**: `"type": "lovelace"` → `"type": "dashboard"`
+- **Our configuration was outdated**: Still using old "lovelace" type
+
+### Solution Implemented
+**Updated HACS configuration to match 2024+ schema**:
+1. **Changed hacs.json type** from "lovelace" to "dashboard"
+2. **Updated validation scripts** to check for correct type
+3. **Updated documentation** to reflect new HACS categories
+
+### Changes Made
+- **hacs.json**: Changed `"type": "lovelace"` → `"type": "dashboard"`
+- **validate-hacs.sh**: Updated validation check for "dashboard" type
+- **ci.yml**: Updated HACS validation workflow for "dashboard" type
+- **README.md**: Updated installation instructions to use "Dashboard" category
+- **HACS_COMPLIANCE.md**: Updated documentation with correct schema
+
+### HACS Category Evolution
+```
+HACS Legacy (pre-2024):     HACS 2024+:
+├── Frontend                ├── Dashboard (Lovelace cards/panels)
+├── Integration             ├── Integration (same)
+├── Theme                   ├── Theme (same)
+└── Plugin                  └── Template (new)
+```
+
+### Updated Installation Flow
+1. **HACS → Dashboard** (not Frontend)
+2. **Add Custom Repository** → Type: "Dashboard"
+3. **Install from Dashboard** section
+
+### Rationale
+- **Future compatibility**: Align with HACS 2024+ schema
+- **Proper categorization**: Dashboard is correct category for Lovelace cards
+- **User experience**: Match what users see in modern HACS interface
+
+### Result
+✅ HACS validation passes with correct "dashboard" type  
+✅ Repository properly categorized in HACS 2024+  
+✅ Installation instructions match current HACS interface  
+✅ Validation scripts check for correct schema  
+✅ Ready for HACS submission with modern schema 

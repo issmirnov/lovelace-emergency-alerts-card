@@ -68,10 +68,12 @@ This card requires the [Emergency Alerts Integration](https://github.com/issmirn
 6. Add the integration via **Settings** → **Devices & Services**
 
 #### Step 2: Install Emergency Alerts Card
-1. In HACS, go to "Frontend"
+1. In HACS, go to "Dashboard" (new category for Lovelace cards)
 2. Click the "+" button and search for "Emergency Alerts Card"
 3. Install the card
 4. Add the card to your Lovelace dashboard
+
+> **Note**: In HACS 2024+, custom Lovelace cards are found under "Dashboard" instead of "Frontend"
 
 ### Manual Installation
 1. Download the latest `emergency-alerts-card.js` from the [releases page](https://github.com/issmirnov/lovelace-emergency-alerts-card/releases)

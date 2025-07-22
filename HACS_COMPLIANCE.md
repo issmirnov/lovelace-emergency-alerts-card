@@ -16,7 +16,7 @@ HACS (Home Assistant Community Store) is a custom integration that allows users 
 
 ### Required Fields in hacs.json
 - ✅ `name` - Display name for the card
-- ✅ `type` - Must be "lovelace" for cards
+- ✅ `type` - Must be "dashboard" for cards (HACS 2024+ schema)
 - ✅ `content_in_root` - Must be true for cards
 - ✅ `description` - Brief description of the card
 - ✅ `render_readme` - Set to true to render README in HACS
@@ -30,7 +30,7 @@ HACS (Home Assistant Community Store) is a custom integration that allows users 
 {
   "name": "Emergency Alerts Card",
   "content_in_root": true,
-  "type": "lovelace",
+  "type": "dashboard",
   "description": "Custom Lovelace card to show emergency alert sensors.",
   "render_readme": true,
   "homeassistant": "2023.8.0"
