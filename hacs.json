@@ -1,9 +1,10 @@
 {
   "name": "Emergency Alerts Card",
   "content_in_root": true,
-  "type": "dashboard",
+  "type": "plugin",
   "description": "Custom Lovelace card to show emergency alert sensors.",
   "render_readme": true,
   "homeassistant": "2023.8.0",
+  "filename": "emergency-alerts-card.js",
   "repository": "issmirnov/lovelace-emergency-alerts-card"
 } 
