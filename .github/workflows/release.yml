@@ -5,6 +5,10 @@ on:
     tags:
       - 'v*'
 
+permissions:
+  contents: write
+  packages: write
+
 jobs:
   release:
     name: Create Release
@@ -50,7 +54,7 @@ jobs:
         cd ..
 
     - name: Create Release
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       with:
         files: |
           emergency-alerts-card-${{ github.ref_name }}.tar.gz
