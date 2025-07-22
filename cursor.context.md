@@ -37,4 +37,39 @@ This approach follows HACS best practices by:
 ✅ Repository remains fully HACS compliant  
 ✅ Users get clear guidance on installation order  
 ✅ Dependencies are properly documented  
-✅ No breaking changes to existing functionality 
+✅ No breaking changes to existing functionality
+
+## 2024-12-19 - Node.js Version Inconsistency Fix
+
+**Author**: AI Assistant  
+**Summary**: Fixed inconsistent Node.js versions across GitHub workflows causing CI failures  
+**Code Reference**: package.json, .github/workflows/*.yml
+
+### Problem
+GitHub Actions were failing due to inconsistent Node.js versions:
+- test.yml: Node 20 for tests, Node 18 for lint/build
+- hacs-validation.yml: Node 20 
+- ci.yml: Node 18 for HACS validation, Node 20/22 for tests, Node 18 for lint/build
+
+### Solution Implemented
+1. **Standardized on Node 18 LTS**: All workflows now use Node 18 consistently
+2. **Added engines field**: Added `"engines": {"node": ">=18.0.0", "npm": ">=8.0.0"}` to package.json
+3. **Fixed all workflows**: Updated test.yml, hacs-validation.yml, and ci.yml to use Node 18
+
+### Changes Made
+- `package.json`: Added engines specification
+- `test.yml`: Changed matrix from `[20]` to `[18]`
+- `hacs-validation.yml`: Changed from Node 20 to Node 18
+- `ci.yml`: Changed matrix from `[20, 22]` to `[18]`
+
+### Rationale
+- Node 18 is the current LTS version
+- Consistent Node.js versions prevent CI/CD issues
+- Engines field helps developers use the correct Node version
+- Simplifies maintenance and reduces confusion
+
+### Result
+✅ All workflows now use Node 18 consistently  
+✅ CI/CD pipeline should pass reliably  
+✅ Local development matches CI environment  
+✅ Clear Node.js version requirements documented 

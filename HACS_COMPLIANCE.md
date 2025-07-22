@@ -41,6 +41,7 @@ HACS (Home Assistant Community Store) is a custom integration that allows users 
 - `render_readme: true` - Enables README rendering in HACS interface
 - `homeassistant: "2023.8.0"` - Specifies minimum Home Assistant version
 - `repository: "issmirnov/lovelace-emergency-alerts-card"` - Repository identifier for HACS tracking
+- `engines` - Node.js version requirements (>=18.0.0)
 
 ### 2. Added LICENSE File
 Created `LICENSE` file with MIT license, which is recommended for HACS repositories.
@@ -76,6 +77,12 @@ Created `validate-hacs.sh` script that developers can run locally to:
 - Added HACS validation badge
 - Added section explaining HACS validation process
 - Included instructions for running local validation
+
+### 6. CI/CD Improvements
+- Standardized Node.js version to 18 LTS across all workflows
+- Added engines field to package.json for version requirements
+- Fixed inconsistent Node.js versions that were causing CI failures
+- Ensured all workflows use the same Node.js version for consistency
 
 ## Validation Process
 
