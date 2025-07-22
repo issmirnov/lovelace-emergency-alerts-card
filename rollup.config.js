@@ -6,7 +6,7 @@ import terser from '@rollup/plugin-terser';
 export default {
   input: 'src/emergency-alerts-card.ts',
   output: {
-    file: 'www/emergency-alerts-card.js',
+    file: 'dist/emergency-alerts-card.js',
     format: 'es',
     inlineDynamicImports: true
   },

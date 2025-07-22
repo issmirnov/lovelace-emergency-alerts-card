@@ -5,7 +5,6 @@ yarn-debug.log*
 yarn-error.log*
 
 # Build output
-dist/
 build/
 
 # Coverage reports
@@ -32,6 +31,6 @@ Thumbs.db
 .env.test.local
 .env.production.local
 
-# Keep www/ directory and built card
-!www/
-!www/emergency-alerts-card.js 
+# Keep dist/ directory and built card for HACS
+!dist/
+!dist/emergency-alerts-card.js 

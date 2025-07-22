@@ -2,11 +2,11 @@
   "name": "emergency-alerts-card",
   "version": "1.0.0",
   "description": "A custom Lovelace card for Emergency Alerts integration",
-  "main": "www/emergency-alerts-card.js",
+  "main": "dist/emergency-alerts-card.js",
   "scripts": {
     "build": "rollup -c",
     "build:deploy": "npm run build && npm run deploy",
-    "deploy": "cp www/emergency-alerts-card.js ../emergency-alerts-integration/config/www/",
+    "deploy": "cp dist/emergency-alerts-card.js ../emergency-alerts-integration/config/www/",
     "dev": "rollup -c -w",
     "dev:deploy": "npm run build:deploy && npm run dev:watch",
     "dev:watch": "rollup -c -w --watch.onStart=\"npm run deploy\"",
@@ -15,7 +15,8 @@
     "lint": "eslint src --ext .ts,.js",
     "format": "prettier --write src",
     "format:check": "prettier --check src",
-    "validate:hacs": "./validate-hacs.sh"
+    "validate:hacs": "./validate-hacs.sh",
+    "validate:hacs:official": "./validate-hacs-official.sh"
   },
   "keywords": [
     "homeassistant",

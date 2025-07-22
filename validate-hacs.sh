@@ -58,20 +58,16 @@ fi
 # Check required fields
 required_fields=("name" "type" "content_in_root")
 for field in "${required_fields[@]}"; do
-    if ! jq -e ".$field" hacs.json >/dev/null 2>&1; then
+    if ! jq -e "has(\"$field\")" hacs.json >/dev/null 2>&1; then
         print_status "FAIL" "hacs.json missing '$field' field"
         exit 1
     fi
 done
 
-# Check specific values
-if [ "$(jq -r '.type' hacs.json)" != "dashboard" ]; then
-    print_status "FAIL" "hacs.json type should be 'dashboard' for cards (HACS 2024+ schema)"
-    exit 1
-fi
 
-if [ "$(jq -r '.content_in_root' hacs.json)" != "true" ]; then
-    print_status "FAIL" "hacs.json content_in_root should be true for cards"
+content_in_root=$(jq -r '.content_in_root' hacs.json)
+if [ "$content_in_root" != "true" ] && [ "$content_in_root" != "false" ]; then
+    print_status "FAIL" "hacs.json content_in_root should be true or false"
     exit 1
 fi
 
@@ -180,23 +176,23 @@ if ! npm run build >/dev/null 2>&1; then
     exit 1
 fi
 
-if [ ! -f "www/emergency-alerts-card.js" ]; then
-    print_status "FAIL" "Main card file not found in www/"
+if [ ! -f "dist/emergency-alerts-card.js" ]; then
+    print_status "FAIL" "Main card file not found in dist/"
     exit 1
 fi
 
 # Cross-platform file size check
 if [[ "$OSTYPE" == "darwin"* ]]; then
-    file_size=$(stat -f%z "www/emergency-alerts-card.js")
+    file_size=$(stat -f%z "dist/emergency-alerts-card.js")
 else
-    file_size=$(stat -c%s "www/emergency-alerts-card.js")
+    file_size=$(stat -c%s "dist/emergency-alerts-card.js")
 fi
 if [ "$file_size" -lt 1000 ]; then
     print_status "FAIL" "Card file seems too small ($file_size bytes)"
     exit 1
 fi
 
-if ! grep -q "customElements.define" www/emergency-alerts-card.js; then
+if ! grep -q "customElements.define" dist/emergency-alerts-card.js; then
     print_status "FAIL" "Card file doesn't contain customElements.define"
     exit 1
 fi

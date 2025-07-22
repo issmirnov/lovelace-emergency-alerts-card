@@ -1,0 +1,17 @@
+name: HACS Validation
+
+on:
+  workflow_dispatch:
+
+jobs:
+  hacs:
+    name: HACS Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: HACS validation
+        uses: "hacs/action@main"
+        with:
+          category: "plugin"

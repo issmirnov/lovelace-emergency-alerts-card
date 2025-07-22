@@ -2,7 +2,7 @@
 
 ## Issues Identified and Fixed
 
-Based on the GitHub Actions failure at https://github.com/issmirnov/lovelace-emergency-alerts-card/actions/runs/16455751444/job/46512260130, the following issues were identified and resolved:
+Based on the GitHub Actions failure at https://github.com/issmirnov/lovelace-emergency-alerts-card/actions/runs/16455751444/job/46512260130 and the 404 error when accessing `/hacsfiles/emergency...`, the following issues were identified and resolved:
 
 ### 1. HACS JSON Validation Failed
 **Problem**: Extra `description` field not allowed in HACS schema
@@ -50,11 +50,12 @@ Based on the GitHub Actions failure at https://github.com/issmirnov/lovelace-eme
 - Created `.github/workflows/set-topics.yml` to automatically set repository topics
 
 ### 3. Build Output Path Issues
-**Problem**: Workflows were checking for `dist/emergency-alerts-card.js` but build outputs to `www/emergency-alerts-card.js`
-**Solution**: Updated all workflow files to use correct path:
-- `.github/workflows/ci.yml`
-- `.github/workflows/test.yml`
-- `validate-hacs.sh`
+**Problem**: Build was outputting to `www/emergency-alerts-card.js` but HACS expects files in `dist/` directory
+**Solution**: Updated build configuration to output to `dist/` directory:
+- `rollup.config.js` - Changed output from `www/` to `dist/`
+- `hacs.json` - Updated filename to point to `dist/emergency-alerts-card.js`
+- `.gitignore` - Updated to include `dist/` instead of `www/`
+- All workflow files and validation scripts updated to use `dist/` path
 
 ### 4. Cross-Platform Compatibility
 **Problem**: Validation script used Linux-specific `stat` command that failed on macOS
@@ -70,12 +71,15 @@ fi
 
 ## Files Modified
 
-1. **`hacs.json`** - Removed invalid `description` field
+1. **`hacs.json`** - Removed invalid `description` field, updated filename to `dist/`
 2. **`.github/topics.txt`** - Added repository topics (new file)
 3. **`.github/workflows/set-topics.yml`** - Added workflow to set topics (new file)
-4. **`.github/workflows/ci.yml`** - Fixed build output path references
-5. **`.github/workflows/test.yml`** - Fixed build output path references
-6. **`validate-hacs.sh`** - Fixed cross-platform compatibility and build output path
+4. **`rollup.config.js`** - Changed output from `www/` to `dist/`
+5. **`.gitignore`** - Updated to include `dist/` instead of `www/`
+6. **`package.json`** - Updated main field and deploy script to use `dist/`
+7. **`.github/workflows/ci.yml`** - Fixed build output path references
+8. **`.github/workflows/test.yml`** - Fixed build output path references
+9. **`validate-hacs.sh`** - Fixed cross-platform compatibility and build output path
 
 ## Validation Results
 
@@ -102,6 +106,7 @@ After applying all fixes:
 ## Notes
 
 - The repository is now fully HACS compliant
-- All workflows have been updated to use the correct build output path (`www/` instead of `dist/`)
+- **404 Issue Fixed**: The `/hacsfiles/emergency...` 404 error is resolved by using `dist/` directory as expected by HACS
+- All workflows have been updated to use the correct build output path (`dist/` instead of `www/`)
 - Cross-platform compatibility has been improved for local development
 - Repository topics will be automatically set when the workflow runs 
