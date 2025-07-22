@@ -15,6 +15,32 @@ A custom Lovelace card for displaying emergency alerts from the Emergency Alerts
 - **Responsive Design**: Adapts to different screen sizes
 - **Home Assistant Integration**: Seamlessly integrates with the Emergency Alerts integration
 
+## Alert Action Buttons Explained
+
+The Emergency Alerts Card provides three main action buttons for each alert, each with a specific purpose and smart display logic:
+
+| Button      | When It Appears                                 | What It Does                                                      |
+|-------------|-------------------------------------------------|-------------------------------------------------------------------|
+| **ACK**     | Alert is active, not acknowledged, not escalated | Marks the alert as acknowledged (user has seen/handled the alert) |
+| **ESC**     | Alert is active, not escalated                  | Escalates the alert (triggers escalation actions, e.g. urgent notification) |
+| **DE-ESC**  | Alert is currently escalated                    | De-escalates the alert (returns to acknowledged state)            |
+| **CLR**     | Alert is active or acknowledged (not cleared)   | Manually clears the alert (resets state, triggers clear actions)  |
+
+**Button Logic:**
+- Only the relevant buttons for the alert's current state are shown.
+- "De-escalate" only appears if the alert is actually escalated.
+- "Acknowledge" and "Escalate" are hidden if the alert is escalated or cleared.
+- "Clear" is always available unless the alert is already cleared.
+
+**Example Scenario:**
+1. **Alert triggers** (e.g., "Water Leak Detected"): You see **ACK**, **ESC**, and **CLR**.
+2. You click **ACK**: The alert is marked as acknowledged. **ESC** and **CLR** remain.
+3. If you click **ESC**: The alert is escalated (urgent actions run). **DE-ESC** and **CLR** now appear.
+4. If you click **DE-ESC**: The alert returns to acknowledged state.
+5. If you click **CLR** at any point: The alert is cleared and all action buttons disappear.
+
+This logic ensures you always see the right actions for the alert's current state, reducing confusion and making emergency management fast and intuitive.
+
 ## Prerequisites
 
 This card requires the [Emergency Alerts Integration](https://github.com/issmirnov/emergency-alerts-integration) to be installed and configured in your Home Assistant instance.

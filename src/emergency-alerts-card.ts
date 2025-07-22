@@ -686,20 +686,29 @@ export class EmergencyAlertsCard extends LitElement {
                                 </button>
                               `
                             : ''}
-                          ${this.config?.show_escalate_button
-                            ? html`
-                                <button
-                                  class="action-btn ${alert.escalated ? 'de-escalate-btn' : 'escalate-btn'}"
-                                  @click="${() => alert.escalated 
-                                    ? this._handleDeEscalate(alert.entity_id) 
-                                    : this._handleEscalate(alert.entity_id)}"
-                                >
-                                  ${this.config?.button_style === 'icons_only' 
-                                    ? (alert.escalated ? '↓' : '↑') 
-                                    : (alert.escalated ? 'DE-ESC' : 'ESC')}
-                                </button>
-                              `
-                            : ''}
+                          ${this.config?.show_escalate_button && !alert.cleared
+                            ? (
+                                alert.escalated
+                                  ? html`
+                                      <button
+                                        class="action-btn de-escalate-btn"
+                                        @click="${() => this._handleDeEscalate(alert.entity_id)}"
+                                      >
+                                        ${this.config?.button_style === 'icons_only' ? '↓' : 'DE-ESC'}
+                                      </button>
+                                    `
+                                  : (!alert.acknowledged && !alert.escalated
+                                      ? html`
+                                          <button
+                                            class="action-btn escalate-btn"
+                                            @click="${() => this._handleEscalate(alert.entity_id)}"
+                                          >
+                                            ${this.config?.button_style === 'icons_only' ? '↑' : 'ESC'}
+                                          </button>
+                                        `
+                                      : '')
+                                )
+                              : ''}
                           ${this.config?.show_clear_button
                             ? html`
                                 <button
