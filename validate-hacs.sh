@@ -56,7 +56,7 @@ if ! jq empty hacs.json 2>/dev/null; then
 fi
 
 # Check required fields
-required_fields=("name" "type" "content_in_root")
+required_fields=("name" "content_in_root")
 for field in "${required_fields[@]}"; do
     if ! jq -e "has(\"$field\")" hacs.json >/dev/null 2>&1; then
         print_status "FAIL" "hacs.json missing '$field' field"
