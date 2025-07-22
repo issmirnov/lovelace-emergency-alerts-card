@@ -1,7 +1,6 @@
 # Emergency Alerts Card
 
-[![Test Emergency Alerts Card](https://github.com/issmirnov/lovelace-emergency-alerts-card/actions/workflows/test.yml/badge.svg)](https://github.com/issmirnov/lovelace-emergency-alerts-card/actions/workflows/test.yml)
-[![HACS Validation](https://github.com/issmirnov/lovelace-emergency-alerts-card/actions/workflows/hacs-validation.yml/badge.svg)](https://github.com/issmirnov/lovelace-emergency-alerts-card/actions/workflows/hacs-validation.yml)
+[![CI](https://github.com/issmirnov/lovelace-emergency-alerts-card/actions/workflows/ci.yml/badge.svg)](https://github.com/issmirnov/lovelace-emergency-alerts-card/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/issmirnov/lovelace-emergency-alerts-card/branch/main/graph/badge.svg)](https://codecov.io/gh/issmirnov/lovelace-emergency-alerts-card)
 
 A custom Lovelace card for displaying emergency alerts from the Emergency Alerts integration.
