@@ -6,12 +6,7 @@ yarn-error.log*
 
 # Build output
 build/
-dist/*.d.ts
-dist/*.d.ts.map
-dist/services/
-dist/utils/
-dist/__tests__/
-dist/test-setup.js
+dist/
 
 # TypeScript declarations (generated)
 *.d.ts
