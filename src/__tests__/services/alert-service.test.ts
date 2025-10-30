@@ -63,6 +63,14 @@ describe('AlertService', () => {
 
       consoleSpy.mockRestore();
     });
+
+    test('handles non-emergency prefixed entity IDs correctly', async () => {
+      await alertService.acknowledge('binary_sensor.custom_alert');
+
+      expect(mockHass.callService).toHaveBeenCalledWith('switch', 'toggle', {
+        entity_id: 'switch.custom_alert_acknowledged',
+      });
+    });
   });
 
   describe('resolve', () => {
@@ -86,6 +94,14 @@ describe('AlertService', () => {
         error,
       });
     });
+
+    test('handles non-emergency prefixed entity IDs correctly', async () => {
+      await alertService.resolve('binary_sensor.custom_alert');
+
+      expect(mockHass.callService).toHaveBeenCalledWith('switch', 'toggle', {
+        entity_id: 'switch.custom_alert_resolved',
+      });
+    });
   });
 
   describe('snooze', () => {
@@ -107,6 +123,14 @@ describe('AlertService', () => {
         message: 'Failed to snooze alert',
         entity_id: 'binary_sensor.emergency_test',
         error,
+      });
+    });
+
+    test('handles non-emergency prefixed entity IDs correctly', async () => {
+      await alertService.snooze('binary_sensor.custom_alert');
+
+      expect(mockHass.callService).toHaveBeenCalledWith('switch', 'turn_on', {
+        entity_id: 'switch.custom_alert_snoozed',
       });
     });
   });

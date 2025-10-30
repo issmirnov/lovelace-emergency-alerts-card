@@ -29,12 +29,14 @@ export class AlertService {
 
   /**
    * Converts binary_sensor entity ID to switch entity ID
-   * @param entity_id Binary sensor entity ID (e.g., binary_sensor.emergency_foo)
+   * Handles any binary_sensor entity, not just those with emergency_ prefix
+   * @param entity_id Binary sensor entity ID (e.g., binary_sensor.emergency_foo or binary_sensor.custom_alert)
    * @param switchType Type of switch (acknowledged, snoozed, resolved)
-   * @returns Switch entity ID (e.g., switch.emergency_foo_acknowledged)
+   * @returns Switch entity ID (e.g., switch.emergency_foo_acknowledged or switch.custom_alert_acknowledged)
    */
   private _convertToSwitchId(entity_id: string, switchType: string): string {
-    return entity_id.replace('binary_sensor.emergency_', 'switch.emergency_') + `_${switchType}`;
+    // Replace binary_sensor domain with switch domain, then append switch type
+    return entity_id.replace('binary_sensor.', 'switch.') + `_${switchType}`;
   }
 
   /**
