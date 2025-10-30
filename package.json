@@ -17,7 +17,8 @@
     "format:check": "prettier --check src",
     "validate:hacs": "./validate-hacs.sh",
     "validate:hacs:official": "./validate-hacs-official.sh",
-    "test:hacs": "./test-hacs-requirements.sh"
+    "test:hacs": "./test-hacs-requirements.sh",
+    "prepare": "husky"
   },
   "keywords": [
     "homeassistant",
@@ -26,6 +27,15 @@
     "emergency",
     "alerts"
   ],
+  "lint-staged": {
+    "src/**/*.{ts,js}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "src/**/*.{json,md}": [
+      "prettier --write"
+    ]
+  },
   "author": "issmirnov",
   "license": "MIT",
   "engines": {
@@ -41,8 +51,10 @@
     "@typescript-eslint/eslint-plugin": "^8.35.0",
     "@typescript-eslint/parser": "^8.35.0",
     "eslint": "^8.0.0",
+    "husky": "^9.1.7",
     "jest": "^29.0.0",
     "jest-environment-jsdom": "^29.0.0",
+    "lint-staged": "^16.2.6",
     "prettier": "^3.0.0",
     "rollup": "^3.0.0",
     "ts-jest": "^29.0.0",

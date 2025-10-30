@@ -30,6 +30,25 @@ jobs:
     - name: Build card
       run: npm run build
 
+    - name: Validate build output
+      run: |
+        if [ ! -f "dist/emergency-alerts-card.js" ]; then
+          echo "❌ Build output not found"
+          exit 1
+        fi
+        if [ ! -f "dist/emergency-alerts-card.js.map" ]; then
+          echo "❌ Sourcemap not found"
+          exit 1
+        fi
+        echo "✅ Build output validated (with sourcemaps)"
+
+    - name: Display build info
+      run: |
+        echo "Build size:"
+        ls -lh dist/emergency-alerts-card.js
+        echo "Sourcemap size:"
+        ls -lh dist/emergency-alerts-card.js.map
+
     - name: Run tests
       run: npm test -- --coverage --watchAll=false
 
@@ -37,17 +56,18 @@ jobs:
       run: |
         # Create release directory
         mkdir -p release
-        
+
         # Copy required files for HACS
-        cp www/emergency-alerts-card.js release/
+        cp dist/emergency-alerts-card.js release/
+        cp dist/emergency-alerts-card.js.map release/
         cp hacs.json release/
         cp README.md release/
-        
+
         # Create tar.gz package
         cd release
         tar -czf ../emergency-alerts-card-${{ github.ref_name }}.tar.gz *
         cd ..
-        
+
         # Create zip package (alternative format)
         cd release
         zip -r ../emergency-alerts-card-${{ github.ref_name }}.zip *

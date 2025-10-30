@@ -1,70 +1,73 @@
-import { LitElement, html, css, PropertyValues } from 'lit';
+/**
+ * Emergency Alerts Card for Home Assistant
+ * Displays and manages emergency alerts from the Emergency Alerts integration
+ *
+ * @module emergency-alerts-card
+ */
 
-// Type definitions
-interface HomeAssistant {
-  states: Record<string, any>;
-  callService: (domain: string, service: string, data?: any) => Promise<any>;
-  config: {
-    language: string;
-  };
-}
+import { LitElement, html, css, PropertyValues, TemplateResult } from 'lit';
+import {
+  HomeAssistant,
+  HassEntity,
+  CardConfig,
+  Alert,
+  GroupedAlerts,
+  ErrorNotification,
+  LoadingState,
+  EmergencyAlertEntity,
+} from './types';
+import { cardStyles } from './styles';
+import { AlertService } from './services/alert-service';
+import {
+  formatTimeAgo,
+  getSeverityIcon,
+  getSeverityColor,
+  getGroupTitle,
+} from './utils/formatters';
+import { shouldShowAlert } from './utils/filters';
+import { sortAlerts } from './utils/sorters';
+import { groupAlerts, getGroupCount } from './utils/groupers';
+import {
+  discoverAlertEntities,
+  entityToAlert,
+  createEntityStateHash,
+} from './utils/entity-discovery';
 
-interface CardConfig {
-  type: string;
-  summary_entity?: string;
-
-  // Display options
-  show_acknowledged?: boolean;
-  show_cleared?: boolean;
-  show_escalated?: boolean;
-  group_by?: 'severity' | 'group' | 'status' | 'none';
-  sort_by?: 'first_triggered' | 'severity' | 'name' | 'group';
-
-  // Filtering
-  severity_filter?: string[];
-  group_filter?: string[];
-  status_filter?: string[];
-
-  // Visual options
-  compact_mode?: boolean;
-  show_timestamps?: boolean;
-  show_group_labels?: boolean;
-  show_severity_icons?: boolean;
-  max_alerts_per_group?: number;
-
-  // Action options
-  show_acknowledge_button?: boolean;
-  show_clear_button?: boolean;
-  show_escalate_button?: boolean;
-  button_style?: 'compact' | 'full' | 'icons_only';
-
-  // Advanced
-  entity_patterns?: string[];
-  refresh_interval?: number;
-}
-
-interface Alert {
-  entity_id: string;
-  name: string;
-  state: string;
-  severity: string;
-  group: string;
-  acknowledged: boolean;
-  escalated: boolean;
-  cleared: boolean;
-  first_triggered?: string;
-  last_cleared?: string;
-  status: string;
-}
-
+/**
+ * Custom Lovelace card for displaying emergency alerts
+ * Integrates with the Emergency Alerts Home Assistant integration
+ *
+ * @element emergency-alerts-card
+ */
 export class EmergencyAlertsCard extends LitElement {
+  /** Home Assistant instance passed by the frontend */
   hass?: HomeAssistant;
+
+  /** Card configuration from Lovelace YAML */
   config?: CardConfig;
 
+  /** Discovered and filtered alert entities */
   public alerts: Alert[] = [];
-  public grouped: Record<string, Alert[]> = {};
-  private groupOrder: string[] = [];
-  public severityOrder: string[] = ['critical', 'warning', 'info'];
+
+  /** Alerts grouped by configured strategy */
+  public grouped: GroupedAlerts = {};
+
+  /** Service for calling Home Assistant alert actions */
+  private alertService?: AlertService;
+
+  /** Set of entity IDs currently being acted upon (for loading states) */
+  private loadingActions: LoadingState = new Set();
+
+  /** Cache for compiled regex patterns (performance optimization) */
+  private patternCache: Map<string, RegExp> = new Map();
+
+  /** Hash of last seen entity states (for change detection) */
+  private lastStatesHash: string = '';
+
+  /** Current error notification to display */
+  private currentError?: ErrorNotification;
+
+  /** Interval ID for auto-refresh */
   private refreshInterval?: number;
 
   static get properties() {
@@ -73,238 +76,24 @@ export class EmergencyAlertsCard extends LitElement {
       config: { attribute: false },
       alerts: { type: Array, state: true },
       grouped: { type: Object, state: true },
+      loadingActions: { type: Object, state: true },
+      currentError: { type: Object, state: true },
     };
   }
 
-  static styles = css`
-    .card {
-      padding: 16px;
-      background: var(--ha-card-background, white);
-      border-radius: var(--ha-card-border-radius, 8px);
-      box-shadow: var(--ha-card-box-shadow, 0 2px 4px rgba(0, 0, 0, 0.1));
-    }
+  static styles = cardStyles;
 
-    .summary-header {
-      font-size: 1.2em;
-      font-weight: bold;
-      margin-bottom: 16px;
-      text-align: center;
-      color: var(--primary-text-color);
-    }
-
-    .alert-item {
-      display: flex;
-      align-items: center;
-      padding: 12px;
-      margin: 6px 0;
-      border-radius: 8px;
-      background: var(--secondary-background-color, #f5f5f5);
-      transition: all 0.2s ease;
-      border-left: 4px solid transparent;
-    }
-
-    .alert-item:hover {
-      background: var(--secondary-background-color-hover, #e8e8e8);
-    }
-
-    .alert-critical {
-      border-left-color: #f44336;
-    }
-
-    .alert-warning {
-      border-left-color: #ff9800;
-    }
-
-    .alert-info {
-      border-left-color: #2196f3;
-    }
-
-    .alert-acknowledged {
-      opacity: 0.7;
-      background: var(--disabled-text-color, #bdbdbd);
-    }
-
-    .alert-escalated {
-      border-left-color: #9c27b0;
-      background: rgba(156, 39, 176, 0.1);
-    }
-
-    .alert-cleared {
-      opacity: 0.5;
-      background: var(--disabled-text-color, #e0e0e0);
-    }
-
-    .group-header {
-      font-weight: bold;
-      margin: 20px 0 12px 0;
-      padding: 8px 12px;
-      border-radius: 6px;
-      background: var(--primary-color, #1976d2);
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .group-header.alert-critical {
-      background: #f44336;
-    }
-
-    .group-header.alert-warning {
-      background: #ff9800;
-    }
-
-    .group-header.alert-info {
-      background: #2196f3;
-    }
-
-    .action-buttons {
-      display: flex;
-      gap: 8px;
-      margin-left: auto;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-    }
-
-    /* Responsive design for narrow columns */
-    @media (max-width: 600px) {
-      .action-buttons {
-        flex-direction: column;
-        gap: 4px;
-        margin-left: 0;
-        margin-top: 8px;
-        width: 100%;
-      }
-
-      .action-btn {
-        width: 100%;
-        justify-content: center;
-      }
-
-      .alert-item {
-        flex-direction: column;
-        align-items: stretch;
-      }
-
-      .alert-content {
-        margin-right: 0;
-        margin-bottom: 8px;
-      }
-    }
-
-    /* For very narrow columns (mobile) */
-    @media (max-width: 400px) {
-      .action-buttons {
-        gap: 3px;
-      }
-
-      .action-btn {
-        padding: 5px 8px;
-        font-size: 0.75em;
-      }
-    }
-
-    .action-btn {
-      padding: 6px 12px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 0.8em;
-      font-weight: 500;
-      transition: all 0.2s ease;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .action-btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    }
-
-    .action-btn:active {
-      transform: translateY(0);
-    }
-
-    .acknowledge-btn {
-      background: var(--primary-color, #1976d2);
-      color: white;
-    }
-
-    .clear-btn {
-      background: var(--success-color, #4caf50);
-      color: white;
-    }
-
-    .escalate-btn {
-      background: var(--error-color, #f44336);
-      color: white;
-    }
-
-    .de-escalate-btn {
-      background: var(--warning-color, #ff9800);
-      color: white;
-    }
-
-    .alert-content {
-      flex: 1;
-      margin-right: 12px;
-    }
-
-    .alert-name {
-      font-weight: 500;
-      color: var(--primary-text-color);
-      margin-bottom: 4px;
-    }
-
-    .alert-meta {
-      font-size: 0.8em;
-      color: var(--secondary-text-color);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .alert-icon {
-      margin-right: 12px;
-      font-size: 1.2em;
-    }
-
-    .compact .alert-item {
-      padding: 8px;
-      margin: 3px 0;
-    }
-
-    .compact .action-btn {
-      padding: 4px 8px;
-      font-size: 0.7em;
-    }
-
-    /* Compact mode responsive adjustments */
-    @media (max-width: 600px) {
-      .compact .action-buttons {
-        gap: 3px;
-      }
-
-      .compact .action-btn {
-        padding: 3px 6px;
-        font-size: 0.65em;
-      }
-    }
-
-    .no-alerts {
-      text-align: center;
-      padding: 32px;
-      color: var(--secondary-text-color);
-      font-style: italic;
-    }
-  `;
-
+  /**
+   * Sets the card configuration
+   * Called by Home Assistant when card is initialized or config changes
+   * @param config Card configuration from Lovelace YAML
+   */
   setConfig(config: CardConfig): void {
     if (!config || !config.type) {
       throw new Error('Invalid configuration');
     }
 
-    // Set defaults
+    // Merge user config with defaults
     this.config = {
       show_acknowledged: true,
       show_cleared: false,
@@ -332,13 +121,83 @@ export class EmergencyAlertsCard extends LitElement {
     this._startAutoRefresh();
   }
 
+  /**
+   * Lifecycle: called when properties change
+   * Implements performance optimization by checking if relevant entities changed
+   * @param changedProps Map of changed properties
+   */
   protected updated(changedProps: PropertyValues): void {
     super.updated(changedProps);
-    if (changedProps.has('hass')) {
-      this._updateAlerts();
+
+    if (changedProps.has('hass') && this.hass) {
+      // Initialize alert service on first hass update
+      if (!this.alertService) {
+        this.alertService = new AlertService(this.hass, this._handleError.bind(this));
+      } else {
+        this.alertService.updateHass(this.hass);
+      }
+
+      // Only update alerts if relevant entities changed
+      if (this._hasRelevantChanges()) {
+        this._updateAlerts();
+      }
     }
   }
 
+  /**
+   * Performance optimization: checks if any emergency alert entities changed
+   * Compares hash of entity IDs and last_updated timestamps
+   * @returns true if emergency alerts have changed
+   */
+  private _hasRelevantChanges(): boolean {
+    if (!this.hass || !this.config) return false;
+
+    const patterns = this.config.entity_patterns || ['binary_sensor.emergency_*'];
+    const alertEntities = discoverAlertEntities(this.hass.states, patterns, this.patternCache);
+
+    const currentHash = createEntityStateHash(alertEntities);
+    const hasChanges = currentHash !== this.lastStatesHash;
+
+    if (hasChanges) {
+      this.lastStatesHash = currentHash;
+    }
+
+    return hasChanges;
+  }
+
+  /**
+   * Discovers and processes all emergency alert entities
+   * Applies filtering, sorting, and grouping based on configuration
+   */
+  private _updateAlerts(): void {
+    if (!this.hass || !this.config) return;
+
+    const patterns = this.config.entity_patterns || ['binary_sensor.emergency_*'];
+
+    // Discover alert entities from Home Assistant
+    const alertEntities: EmergencyAlertEntity[] = discoverAlertEntities(
+      this.hass.states,
+      patterns,
+      this.patternCache
+    );
+
+    // Convert to normalized Alert objects
+    const allAlerts: Alert[] = alertEntities.map(entityToAlert);
+
+    // Filter alerts based on configuration
+    const filteredAlerts = allAlerts.filter(alert => shouldShowAlert(alert, this.config!));
+
+    // Sort alerts
+    sortAlerts(filteredAlerts, this.config);
+
+    // Group alerts
+    this.alerts = filteredAlerts;
+    this.grouped = groupAlerts(filteredAlerts, this.config);
+  }
+
+  /**
+   * Starts auto-refresh timer if configured
+   */
   private _startAutoRefresh(): void {
     if (this.refreshInterval) {
       clearInterval(this.refreshInterval);
@@ -351,6 +210,9 @@ export class EmergencyAlertsCard extends LitElement {
     }
   }
 
+  /**
+   * Lifecycle: cleanup when element is removed
+   */
   public disconnectedCallback(): void {
     super.disconnectedCallback();
     if (this.refreshInterval) {
@@ -358,259 +220,117 @@ export class EmergencyAlertsCard extends LitElement {
     }
   }
 
-  public _groupAlertsBySeverity(alerts: Alert[]): Record<string, Alert[]> {
-    const grouped: Record<string, Alert[]> = {};
-    this.severityOrder.forEach(sev => (grouped[sev] = []));
+  /**
+   * Handles errors from alert service
+   * Displays error notification to user
+   * @param error Error notification object
+   */
+  private _handleError(error: ErrorNotification): void {
+    this.currentError = error;
+    this.requestUpdate();
 
-    for (const alert of alerts) {
-      grouped[alert.severity] = grouped[alert.severity] || [];
-      grouped[alert.severity].push(alert);
-    }
-    return grouped;
-  }
-
-  public _groupAlertsByGroup(alerts: Alert[]): Record<string, Alert[]> {
-    const grouped: Record<string, Alert[]> = {};
-
-    for (const alert of alerts) {
-      const group = alert.group || 'other';
-      grouped[group] = grouped[group] || [];
-      grouped[group].push(alert);
-    }
-    return grouped;
-  }
-
-  public _groupAlertsByStatus(alerts: Alert[]): Record<string, Alert[]> {
-    const grouped: Record<string, Alert[]> = {
-      active: [],
-      acknowledged: [],
-      escalated: [],
-      cleared: [],
-    };
-
-    for (const alert of alerts) {
-      grouped[alert.status].push(alert);
-    }
-    return grouped;
-  }
-
-  private _updateAlerts(): void {
-    if (!this.hass || !this.config) return;
-
-    const alerts: Alert[] = [];
-    const patterns = this.config.entity_patterns || ['binary_sensor.emergency_*'];
-
-    Object.values(this.hass.states).forEach((entity: any) => {
-      // Check if entity matches any pattern
-      const matchesPattern = patterns.some(pattern => {
-        if (pattern.includes('*')) {
-          const regex = new RegExp(pattern.replace(/\*/g, '.*'));
-          return regex.test(entity.entity_id);
-        }
-        return entity.entity_id === pattern;
-      });
-
-      // Also check if entity has emergency alert attributes
-      const hasEmergencyAttributes =
-        entity.attributes && (entity.attributes.severity || entity.attributes.group);
-
-      if (matchesPattern || hasEmergencyAttributes) {
-        const alert: Alert = {
-          entity_id: entity.entity_id,
-          name: entity.attributes.friendly_name || entity.entity_id,
-          state: entity.state,
-          severity: entity.attributes.severity || 'info',
-          group: entity.attributes.group || 'other',
-          acknowledged: !!entity.attributes.acknowledged,
-          escalated: !!entity.attributes.escalated,
-          cleared: !!entity.attributes.cleared,
-          first_triggered: entity.attributes.first_triggered,
-          last_cleared: entity.attributes.last_cleared,
-          status: this._getAlertStatus(entity),
-        };
-
-        // Apply filters
-        if (this._shouldShowAlert(alert)) {
-          alerts.push(alert);
-        }
+    // Auto-dismiss error after 5 seconds
+    setTimeout(() => {
+      if (this.currentError === error) {
+        this.currentError = undefined;
+        this.requestUpdate();
       }
-    });
-
-    // Sort alerts
-    this._sortAlerts(alerts);
-
-    this.alerts = alerts;
-    this.grouped = this._groupAlerts(alerts);
+    }, 5000);
   }
 
-  private _getAlertStatus(entity: any): string {
-    if (entity.attributes.cleared) return 'cleared';
-    if (entity.attributes.acknowledged) return 'acknowledged';
-    if (entity.attributes.escalated) return 'escalated';
-    if (entity.state === 'on') return 'active';
-    return 'inactive';
+  /**
+   * Dismisses the current error notification
+   */
+  private _dismissError(): void {
+    this.currentError = undefined;
   }
 
-  private _shouldShowAlert(alert: Alert): boolean {
-    if (!this.config) return true;
+  /**
+   * Handles acknowledge action with loading state
+   * @param entity_id Entity ID to acknowledge
+   */
+  private async _handleAcknowledge(entity_id: string): Promise<void> {
+    if (!this.alertService) return;
 
-    // Severity filter
-    if (this.config.severity_filter && !this.config.severity_filter.includes(alert.severity)) {
-      return false;
-    }
+    this.loadingActions.add(entity_id);
+    this.requestUpdate();
 
-    // Group filter
-    if (
-      this.config.group_filter &&
-      this.config.group_filter.length > 0 &&
-      !this.config.group_filter.includes(alert.group)
-    ) {
-      return false;
-    }
-
-    // Status filter
-    if (this.config.status_filter && !this.config.status_filter.includes(alert.status)) {
-      return false;
-    }
-
-    // Individual status toggles
-    if (!this.config.show_acknowledged && alert.acknowledged) return false;
-    if (!this.config.show_cleared && alert.cleared) return false;
-    if (!this.config.show_escalated && alert.escalated) return false;
-
-    return true;
-  }
-
-  private _sortAlerts(alerts: Alert[]): void {
-    if (!this.config) return;
-
-    alerts.sort((a, b) => {
-      switch (this.config!.sort_by) {
-        case 'first_triggered': {
-          const aTime = a.first_triggered ? new Date(a.first_triggered).getTime() : 0;
-          const bTime = b.first_triggered ? new Date(b.first_triggered).getTime() : 0;
-          return bTime - aTime; // Newest first
-        }
-        case 'severity': {
-          const severityOrder = { critical: 0, warning: 1, info: 2 };
-          return (
-            (severityOrder[a.severity as keyof typeof severityOrder] || 3) -
-            (severityOrder[b.severity as keyof typeof severityOrder] || 3)
-          );
-        }
-        case 'name':
-          return a.name.localeCompare(b.name);
-        case 'group':
-          return a.group.localeCompare(b.group);
-        default:
-          return 0;
-      }
-    });
-  }
-
-  private _groupAlerts(alerts: Alert[]): Record<string, Alert[]> {
-    if (!this.config) return {};
-
-    switch (this.config.group_by) {
-      case 'group':
-        return this._groupAlertsByGroup(alerts);
-      case 'status':
-        return this._groupAlertsByStatus(alerts);
-      case 'none':
-        return { all: alerts };
-      case 'severity':
-      default:
-        return this._groupAlertsBySeverity(alerts);
+    try {
+      await this.alertService.acknowledge(entity_id);
+    } finally {
+      this.loadingActions.delete(entity_id);
+      this.requestUpdate();
     }
   }
 
-  public async _handleAcknowledge(entity_id: string): Promise<void> {
-    if (!this.hass) return;
-    await this.hass.callService('emergency_alerts', 'acknowledge', { entity_id });
-  }
+  /**
+   * Handles clear action with loading state
+   * @param entity_id Entity ID to clear
+   */
+  private async _handleClear(entity_id: string): Promise<void> {
+    if (!this.alertService) return;
 
-  public async _handleClear(entity_id: string): Promise<void> {
-    if (!this.hass) return;
-    await this.hass.callService('emergency_alerts', 'clear', { entity_id });
-  }
+    this.loadingActions.add(entity_id);
+    this.requestUpdate();
 
-  public async _handleEscalate(entity_id: string): Promise<void> {
-    if (!this.hass) return;
-    await this.hass.callService('emergency_alerts', 'escalate', { entity_id });
-  }
-
-  public async _handleDeEscalate(entity_id: string): Promise<void> {
-    if (!this.hass) return;
-    // For de-escalation, we can use the acknowledge service to reset the escalated state
-    await this.hass.callService('emergency_alerts', 'acknowledge', { entity_id });
-  }
-
-  public _formatTimeAgo(iso: string): string {
-    if (!iso) return '';
-    const now = new Date();
-    const then = new Date(iso);
-    const diffMs = now.getTime() - then.getTime();
-    const diffMins = Math.floor(diffMs / (1000 * 60));
-    const diffHours = Math.floor(diffMins / 60);
-
-    if (diffMins < 1) return 'just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    return `${diffHours}h ago`;
-  }
-
-  public _getSeverityIcon(severity: string): string {
-    switch (severity) {
-      case 'critical':
-        return 'mdi:alert-circle';
-      case 'warning':
-        return 'mdi:alert';
-      case 'info':
-        return 'mdi:information';
-      default:
-        return 'mdi:help-circle';
+    try {
+      await this.alertService.clear(entity_id);
+    } finally {
+      this.loadingActions.delete(entity_id);
+      this.requestUpdate();
     }
   }
 
-  public _getSeverityColor(severity: string): string {
-    switch (severity) {
-      case 'critical':
-        return '#f44336';
-      case 'warning':
-        return '#ff9800';
-      case 'info':
-        return '#2196f3';
-      default:
-        return '#9e9e9e';
+  /**
+   * Handles escalate action with loading state
+   * @param entity_id Entity ID to escalate
+   */
+  private async _handleEscalate(entity_id: string): Promise<void> {
+    if (!this.alertService) return;
+
+    this.loadingActions.add(entity_id);
+    this.requestUpdate();
+
+    try {
+      await this.alertService.escalate(entity_id);
+    } finally {
+      this.loadingActions.delete(entity_id);
+      this.requestUpdate();
     }
   }
 
-  private _getGroupTitle(group: string): string {
-    if (!this.config) return group;
+  /**
+   * Handles de-escalate action with loading state
+   * @param entity_id Entity ID to de-escalate
+   */
+  private async _handleDeEscalate(entity_id: string): Promise<void> {
+    if (!this.alertService) return;
 
-    switch (this.config.group_by) {
-      case 'group':
-        return group.charAt(0).toUpperCase() + group.slice(1);
-      case 'status':
-        return group.charAt(0).toUpperCase() + group.slice(1);
-      case 'severity':
-        return group.charAt(0).toUpperCase() + group.slice(1);
-      default:
-        return 'All Alerts';
+    this.loadingActions.add(entity_id);
+    this.requestUpdate();
+
+    try {
+      await this.alertService.deEscalate(entity_id);
+    } finally {
+      this.loadingActions.delete(entity_id);
+      this.requestUpdate();
     }
   }
 
-  private _getGroupCount(alerts: Alert[]): number {
-    if (!this.config) return alerts.length;
-
-    switch (this.config.group_by) {
-      case 'status':
-        return alerts.length; // Show total count for status groups
-      default:
-        return alerts.filter(a => a.state === 'on').length;
-    }
+  /**
+   * Determines if action buttons should be shown for an alert
+   * @param alert Alert to check
+   * @returns true if actions should be displayed
+   */
+  private _shouldShowActions(alert: Alert): boolean {
+    return !alert.cleared;
   }
 
-  render() {
+  /**
+   * Renders the card UI
+   * @returns Lit template
+   */
+  render(): TemplateResult {
     if (!this.hass) {
       return html`<div class="card">Loading...</div>`;
     }
@@ -618,126 +338,241 @@ export class EmergencyAlertsCard extends LitElement {
     const totalActive = this.alerts.filter(a => a.state === 'on').length;
     const cardClass = this.config?.compact_mode ? 'compact' : '';
 
-    if (this.alerts.length === 0) {
-      return html`
-        <div class="card">
-          <div class="summary-header">Emergency Alerts (0 active)</div>
-          <div class="no-alerts">No alerts to display</div>
-        </div>
-      `;
-    }
-
     return html`
       <div class="card ${cardClass}">
         <div class="summary-header">Emergency Alerts (${totalActive} active)</div>
 
-        ${Object.entries(this.grouped).map(([group, alerts]) => {
-          if (alerts.length === 0) return '';
-
-          const groupCount = this._getGroupCount(alerts);
-          const groupTitle = this._getGroupTitle(group);
-          const severityClass = this.config?.group_by === 'severity' ? `alert-${group}` : '';
-
-          return html`
-            <div class="group-header ${severityClass}">
-              <span>${groupTitle} (${groupCount})</span>
-            </div>
-            ${alerts.slice(0, this.config?.max_alerts_per_group || 50).map(
-              alert => html`
-                <div
-                  class="alert-item alert-${alert.severity} ${alert.acknowledged
-                    ? 'alert-acknowledged'
-                    : ''} ${alert.escalated ? 'alert-escalated' : ''} ${alert.cleared
-                    ? 'alert-cleared'
-                    : ''}"
-                >
-                  ${this.config?.show_severity_icons
-                    ? html`
-                        <ha-icon
-                          class="alert-icon"
-                          icon="${this._getSeverityIcon(alert.severity)}"
-                          style="color: ${this._getSeverityColor(alert.severity)};"
-                        ></ha-icon>
-                      `
-                    : ''}
-
-                  <div class="alert-content">
-                    <div class="alert-name">${alert.name}</div>
-                    <div class="alert-meta">
-                      ${this.config?.show_group_labels ? html` <span>${alert.group}</span> ` : ''}
-                      ${this.config?.show_timestamps && alert.first_triggered
-                        ? html` <span>• ${this._formatTimeAgo(alert.first_triggered)}</span> `
-                        : ''}
-                    </div>
-                  </div>
-
-                  ${alert.state === 'on' && this._shouldShowActions(alert)
-                    ? html`
-                        <div class="action-buttons">
-                          ${this.config?.show_acknowledge_button &&
-                          !alert.acknowledged &&
-                          !alert.escalated
-                            ? html`
-                                <button
-                                  class="action-btn acknowledge-btn"
-                                  @click="${() => this._handleAcknowledge(alert.entity_id)}"
-                                >
-                                  ${this.config?.button_style === 'icons_only' ? '✓' : 'ACK'}
-                                </button>
-                              `
-                            : ''}
-                          ${this.config?.show_escalate_button && !alert.cleared
-                            ? alert.escalated
-                              ? html`
-                                  <button
-                                    class="action-btn de-escalate-btn"
-                                    @click="${() => this._handleDeEscalate(alert.entity_id)}"
-                                  >
-                                    ${this.config?.button_style === 'icons_only' ? '↓' : 'DE-ESC'}
-                                  </button>
-                                `
-                              : !alert.acknowledged && !alert.escalated
-                                ? html`
-                                    <button
-                                      class="action-btn escalate-btn"
-                                      @click="${() => this._handleEscalate(alert.entity_id)}"
-                                    >
-                                      ${this.config?.button_style === 'icons_only' ? '↑' : 'ESC'}
-                                    </button>
-                                  `
-                                : ''
-                            : ''}
-                          ${this.config?.show_clear_button
-                            ? html`
-                                <button
-                                  class="action-btn clear-btn"
-                                  @click="${() => this._handleClear(alert.entity_id)}"
-                                >
-                                  ${this.config?.button_style === 'icons_only' ? '×' : 'CLR'}
-                                </button>
-                              `
-                            : ''}
-                        </div>
-                      `
-                    : ''}
-                </div>
-              `
-            )}
-          `;
-        })}
+        ${this._renderErrorNotification()} ${this._renderAlerts()}
       </div>
     `;
   }
 
-  private _shouldShowActions(alert: Alert): boolean {
-    return !alert.cleared;
+  /**
+   * Renders error notification if present
+   * @returns Lit template
+   */
+  private _renderErrorNotification(): TemplateResult | string {
+    if (!this.currentError) return '';
+
+    return html`
+      <div class="error-notification">
+        <span class="error-icon">⚠️</span>
+        <span class="error-message">${this.currentError.message}</span>
+        <button class="error-dismiss" @click=${this._dismissError}>×</button>
+      </div>
+    `;
   }
 
-  // Add static methods for Home Assistant card editor support
-  static getConfigElement() {
-    return document.createElement('emergency-alerts-card-editor');
+  /**
+   * Renders all alert groups
+   * @returns Lit template
+   */
+  private _renderAlerts(): TemplateResult | string {
+    if (this.alerts.length === 0) {
+      return html`<div class="no-alerts">No alerts to display</div>`;
+    }
+
+    return html`
+      ${Object.entries(this.grouped).map(([group, alerts]) =>
+        this._renderAlertGroup(group, alerts)
+      )}
+    `;
   }
 
+  /**
+   * Renders a single alert group
+   * @param group Group name
+   * @param alerts Alerts in the group
+   * @returns Lit template
+   */
+  private _renderAlertGroup(group: string, alerts: Alert[]): TemplateResult | string {
+    if (alerts.length === 0) return '';
+
+    const groupCount = getGroupCount(alerts, this.config!.group_by || 'severity');
+    const groupTitle = getGroupTitle(group, this.config!.group_by || 'severity');
+    const severityClass = this.config?.group_by === 'severity' ? `alert-${group}` : '';
+
+    const maxAlerts = this.config?.max_alerts_per_group || 50;
+    const displayAlerts = alerts.slice(0, maxAlerts);
+
+    return html`
+      <div class="group-header ${severityClass}">
+        <span>${groupTitle} (${groupCount})</span>
+      </div>
+      ${displayAlerts.map(alert => this._renderAlert(alert))}
+    `;
+  }
+
+  /**
+   * Renders a single alert item
+   * @param alert Alert to render
+   * @returns Lit template
+   */
+  private _renderAlert(alert: Alert): TemplateResult {
+    const classes = [
+      'alert-item',
+      `alert-${alert.severity}`,
+      alert.acknowledged ? 'alert-acknowledged' : '',
+      alert.escalated ? 'alert-escalated' : '',
+      alert.cleared ? 'alert-cleared' : '',
+    ]
+      .filter(Boolean)
+      .join(' ');
+
+    return html`
+      <div class=${classes}>
+        ${this._renderAlertIcon(alert)} ${this._renderAlertContent(alert)}
+        ${alert.state === 'on' && this._shouldShowActions(alert)
+          ? this._renderAlertActions(alert)
+          : ''}
+      </div>
+    `;
+  }
+
+  /**
+   * Renders alert severity icon
+   * @param alert Alert to render icon for
+   * @returns Lit template
+   */
+  private _renderAlertIcon(alert: Alert): TemplateResult | string {
+    if (!this.config?.show_severity_icons) return '';
+
+    return html`
+      <ha-icon
+        class="alert-icon"
+        icon="${getSeverityIcon(alert.severity)}"
+        style="color: ${getSeverityColor(alert.severity)};"
+      ></ha-icon>
+    `;
+  }
+
+  /**
+   * Renders alert content (name and metadata)
+   * @param alert Alert to render content for
+   * @returns Lit template
+   */
+  private _renderAlertContent(alert: Alert): TemplateResult {
+    return html`
+      <div class="alert-content">
+        <div class="alert-name">${alert.name}</div>
+        <div class="alert-meta">
+          ${this.config?.show_group_labels ? html`<span>${alert.group}</span>` : ''}
+          ${this.config?.show_timestamps && alert.first_triggered
+            ? html`<span>• ${formatTimeAgo(alert.first_triggered)}</span>`
+            : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Renders action buttons for an alert
+   * @param alert Alert to render actions for
+   * @returns Lit template
+   */
+  private _renderAlertActions(alert: Alert): TemplateResult {
+    const isLoading = this.loadingActions.has(alert.entity_id);
+
+    return html`
+      <div class="action-buttons">
+        ${this._renderAcknowledgeButton(alert, isLoading)}
+        ${this._renderEscalateButton(alert, isLoading)} ${this._renderClearButton(alert, isLoading)}
+      </div>
+    `;
+  }
+
+  /**
+   * Renders acknowledge button if appropriate
+   * @param alert Alert to render button for
+   * @param isLoading Whether action is in progress
+   * @returns Lit template
+   */
+  private _renderAcknowledgeButton(alert: Alert, isLoading: boolean): TemplateResult | string {
+    if (!this.config?.show_acknowledge_button || alert.acknowledged || alert.escalated) {
+      return '';
+    }
+
+    const label = this.config?.button_style === 'icons_only' ? '✓' : 'ACK';
+
+    return html`
+      <button
+        class="action-btn acknowledge-btn ${isLoading ? 'loading' : ''}"
+        ?disabled=${isLoading}
+        @click=${() => this._handleAcknowledge(alert.entity_id)}
+      >
+        ${isLoading ? '⏳' : label}
+      </button>
+    `;
+  }
+
+  /**
+   * Renders escalate/de-escalate button if appropriate
+   * @param alert Alert to render button for
+   * @param isLoading Whether action is in progress
+   * @returns Lit template
+   */
+  private _renderEscalateButton(alert: Alert, isLoading: boolean): TemplateResult | string {
+    if (!this.config?.show_escalate_button || alert.cleared) {
+      return '';
+    }
+
+    if (alert.escalated) {
+      const label = this.config?.button_style === 'icons_only' ? '↓' : 'DE-ESC';
+      return html`
+        <button
+          class="action-btn de-escalate-btn ${isLoading ? 'loading' : ''}"
+          ?disabled=${isLoading}
+          @click=${() => this._handleDeEscalate(alert.entity_id)}
+        >
+          ${isLoading ? '⏳' : label}
+        </button>
+      `;
+    }
+
+    if (!alert.acknowledged && !alert.escalated) {
+      const label = this.config?.button_style === 'icons_only' ? '↑' : 'ESC';
+      return html`
+        <button
+          class="action-btn escalate-btn ${isLoading ? 'loading' : ''}"
+          ?disabled=${isLoading}
+          @click=${() => this._handleEscalate(alert.entity_id)}
+        >
+          ${isLoading ? '⏳' : label}
+        </button>
+      `;
+    }
+
+    return '';
+  }
+
+  /**
+   * Renders clear button if appropriate
+   * @param alert Alert to render button for
+   * @param isLoading Whether action is in progress
+   * @returns Lit template
+   */
+  private _renderClearButton(alert: Alert, isLoading: boolean): TemplateResult | string {
+    if (!this.config?.show_clear_button) {
+      return '';
+    }
+
+    const label = this.config?.button_style === 'icons_only' ? '×' : 'CLR';
+
+    return html`
+      <button
+        class="action-btn clear-btn ${isLoading ? 'loading' : ''}"
+        ?disabled=${isLoading}
+        @click=${() => this._handleClear(alert.entity_id)}
+      >
+        ${isLoading ? '⏳' : label}
+      </button>
+    `;
+  }
+
+  /**
+   * Returns stub configuration for card picker
+   * @returns Default configuration
+   */
   static getStubConfig(): CardConfig {
     return {
       type: 'custom:emergency-alerts-card',
@@ -763,9 +598,21 @@ export class EmergencyAlertsCard extends LitElement {
       refresh_interval: 30,
     };
   }
+
+  /**
+   * Returns card editor element
+   * @returns Editor element
+   */
+  static getConfigElement() {
+    return document.createElement('emergency-alerts-card-editor');
+  }
 }
 
-// Configuration Editor Class
+/**
+ * Card editor for Home Assistant Lovelace UI
+ * Provides visual configuration interface for the Emergency Alerts Card
+ * Note: This editor will be refactored in a future update to use the modular architecture
+ */
 export class EmergencyAlertsCardEditor extends LitElement {
   hass?: HomeAssistant;
   config?: CardConfig;
@@ -867,28 +714,11 @@ export class EmergencyAlertsCardEditor extends LitElement {
       margin-top: 8px;
     }
 
-    .checkbox-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
     .help-text {
       font-size: 0.8em;
       color: var(--secondary-text-color);
       margin-top: 4px;
       font-style: italic;
-    }
-
-    .entity-patterns {
-      width: 100%;
-      min-height: 100px;
-      font-family: monospace;
-      resize: vertical;
-    }
-
-    mwc-button {
-      margin: 4px;
     }
 
     .array-input {
@@ -916,65 +746,12 @@ export class EmergencyAlertsCardEditor extends LitElement {
     this.config = config;
   }
 
-  private _valueChanged(field: string, value: any): void {
+  private _valueChanged(field: string, value: unknown): void {
     if (!this.config) return;
 
-    try {
-      const newConfig = { ...this.config };
-
-      // Handle nested object updates
-      if (field.includes('.')) {
-        const [parent, child] = field.split('.');
-        const parentKey = parent as keyof CardConfig;
-        const parentValue = newConfig[parentKey];
-
-        if (parentValue && typeof parentValue === 'object') {
-          (newConfig[parentKey] as any) = {
-            ...parentValue,
-            [child]: value,
-          };
-        } else {
-          (newConfig[parentKey] as any) = {
-            [child]: value,
-          };
-        }
-      } else {
-        // Type-safe assignment for known fields
-        switch (field) {
-          case 'button_style':
-            if (['compact', 'full', 'icons_only'].includes(value)) {
-              (newConfig as any)[field] = value;
-            } else {
-              console.warn(`Invalid button_style value: ${value}`);
-              return;
-            }
-            break;
-          case 'group_by':
-            if (['severity', 'group', 'status', 'none'].includes(value)) {
-              (newConfig as any)[field] = value;
-            } else {
-              console.warn(`Invalid group_by value: ${value}`);
-              return;
-            }
-            break;
-          case 'sort_by':
-            if (['first_triggered', 'severity', 'name', 'group'].includes(value)) {
-              (newConfig as any)[field] = value;
-            } else {
-              console.warn(`Invalid sort_by value: ${value}`);
-              return;
-            }
-            break;
-          default:
-            (newConfig as any)[field] = value;
-        }
-      }
-
-      this.config = newConfig;
-      this._fireConfigChanged();
-    } catch (error) {
-      console.error(`Error updating field ${field}:`, error);
-    }
+    const newConfig = { ...this.config, [field]: value };
+    this.config = newConfig;
+    this._fireConfigChanged();
   }
 
   private _fireConfigChanged(): void {
@@ -991,32 +768,30 @@ export class EmergencyAlertsCardEditor extends LitElement {
   }
 
   private _addArrayItem(field: string): void {
-    const currentArray = (this.config as any)?.[field] || [];
+    const currentArray = ((this.config as Record<string, unknown>)?.[field] as string[]) || [];
     this._updateStringArray(field, [...currentArray, '']);
   }
 
   private _removeArrayItem(field: string, index: number): void {
-    const currentArray = (this.config as any)?.[field] || [];
-    const newArray = currentArray.filter((_: any, i: number) => i !== index);
+    const currentArray = ((this.config as Record<string, unknown>)?.[field] as string[]) || [];
+    const newArray = currentArray.filter((_, i) => i !== index);
     this._updateStringArray(field, newArray);
   }
 
   private _updateArrayItem(field: string, index: number, value: string): void {
-    const currentArray = (this.config as any)?.[field] || [];
+    const currentArray = ((this.config as Record<string, unknown>)?.[field] as string[]) || [];
     const newArray = [...currentArray];
     newArray[index] = value;
     this._updateStringArray(field, newArray);
   }
 
   private _toggleFilterValue(field: string, value: string, checked: boolean): void {
-    const currentArray = (this.config as any)?.[field] || [];
+    const currentArray = ((this.config as Record<string, unknown>)?.[field] as string[]) || [];
     let newArray: string[];
 
     if (checked) {
-      // Add value if not already present
       newArray = currentArray.includes(value) ? currentArray : [...currentArray, value];
     } else {
-      // Remove value if present
       newArray = currentArray.filter((v: string) => v !== value);
     }
 
@@ -1027,17 +802,17 @@ export class EmergencyAlertsCardEditor extends LitElement {
     if (!this.hass) return [];
 
     const summaryEntities = Object.values(this.hass.states)
-      .filter((entity: any) => {
+      .filter((entity: HassEntity) => {
         const entityId = entity.entity_id;
         return (
           entityId.startsWith('sensor.emergency_alerts') &&
           (entityId.includes('summary') || entityId.includes('Summary'))
         );
       })
-      .sort((a: any, b: any) => a.entity_id.localeCompare(b.entity_id));
+      .sort((a, b) => a.entity_id.localeCompare(b.entity_id));
 
     return summaryEntities.map(
-      (entity: any) => html`
+      entity => html`
         <mwc-list-item value="${entity.entity_id}">
           ${entity.attributes?.friendly_name || entity.entity_id}
         </mwc-list-item>
@@ -1066,9 +841,10 @@ export class EmergencyAlertsCardEditor extends LitElement {
     if (!this.hass) return [];
 
     const groups = new Set<string>();
-    Object.values(this.hass.states).forEach((entity: any) => {
-      if (entity.attributes?.group) {
-        groups.add(entity.attributes.group);
+    Object.values(this.hass.states).forEach((entity: HassEntity) => {
+      const group = (entity.attributes as Record<string, unknown>)?.group;
+      if (typeof group === 'string') {
+        groups.add(group);
       }
     });
 
@@ -1086,7 +862,7 @@ export class EmergencyAlertsCardEditor extends LitElement {
     options: Array<{ value: string; label: string }>,
     helpText?: string
   ) {
-    const selectedValues = (this.config as any)?.[field] || [];
+    const selectedValues = ((this.config as Record<string, unknown>)?.[field] as string[]) || [];
 
     return html`
       <div class="field">
@@ -1098,8 +874,12 @@ export class EmergencyAlertsCardEditor extends LitElement {
                 <div class="checkbox-item">
                   <ha-checkbox
                     .checked=${selectedValues.includes(option.value)}
-                    @change=${(e: any) =>
-                      this._toggleFilterValue(field, option.value, e.target.checked)}
+                    @change=${(e: Event) =>
+                      this._toggleFilterValue(
+                        field,
+                        option.value,
+                        (e.target as HTMLInputElement).checked
+                      )}
                   ></ha-checkbox>
                   <span class="checkbox-label">${option.label}</span>
                 </div>
@@ -1113,7 +893,7 @@ export class EmergencyAlertsCardEditor extends LitElement {
   }
 
   private _renderStringArrayEditor(field: string, label: string, helpText?: string) {
-    const values = (this.config as any)?.[field] || [];
+    const values = ((this.config as Record<string, unknown>)?.[field] as string[]) || [];
 
     return html`
       <div class="field">
@@ -1125,7 +905,8 @@ export class EmergencyAlertsCardEditor extends LitElement {
                 <div class="array-item">
                   <ha-textfield
                     .value=${value}
-                    @input=${(e: any) => this._updateArrayItem(field, index, e.target.value)}
+                    @input=${(e: Event) =>
+                      this._updateArrayItem(field, index, (e.target as HTMLInputElement).value)}
                     placeholder="Enter value..."
                   ></ha-textfield>
                   <mwc-button
@@ -1164,10 +945,8 @@ export class EmergencyAlertsCardEditor extends LitElement {
             <div class="field-input">
               <ha-select
                 .value=${this.config.summary_entity || ''}
-                @change=${(e: Event) => {
-                  const target = e.target as any;
-                  this._valueChanged('summary_entity', target.value);
-                }}
+                @change=${(e: Event) =>
+                  this._valueChanged('summary_entity', (e.target as HTMLSelectElement).value)}
               >
                 <mwc-list-item value="">Auto-detect (recommended)</mwc-list-item>
                 ${this._getSummaryEntityOptions()}
@@ -1181,10 +960,8 @@ export class EmergencyAlertsCardEditor extends LitElement {
             <div class="field-input">
               <ha-select
                 .value=${this.config.group_by || 'severity'}
-                @change=${(e: Event) => {
-                  const target = e.target as any;
-                  this._valueChanged('group_by', target.value);
-                }}
+                @change=${(e: Event) =>
+                  this._valueChanged('group_by', (e.target as HTMLSelectElement).value)}
               >
                 <mwc-list-item value="severity">Severity</mwc-list-item>
                 <mwc-list-item value="group">Group</mwc-list-item>
@@ -1199,10 +976,8 @@ export class EmergencyAlertsCardEditor extends LitElement {
             <div class="field-input">
               <ha-select
                 .value=${this.config.sort_by || 'first_triggered'}
-                @change=${(e: Event) => {
-                  const target = e.target as any;
-                  this._valueChanged('sort_by', target.value);
-                }}
+                @change=${(e: Event) =>
+                  this._valueChanged('sort_by', (e.target as HTMLSelectElement).value)}
               >
                 <mwc-list-item value="first_triggered">First Triggered</mwc-list-item>
                 <mwc-list-item value="severity">Severity</mwc-list-item>
@@ -1221,7 +996,8 @@ export class EmergencyAlertsCardEditor extends LitElement {
             <label>Show Acknowledged Alerts</label>
             <ha-switch
               .checked=${this.config.show_acknowledged ?? true}
-              @change=${(e: any) => this._valueChanged('show_acknowledged', e.target.checked)}
+              @change=${(e: Event) =>
+                this._valueChanged('show_acknowledged', (e.target as HTMLInputElement).checked)}
             ></ha-switch>
           </div>
 
@@ -1229,7 +1005,8 @@ export class EmergencyAlertsCardEditor extends LitElement {
             <label>Show Cleared Alerts</label>
             <ha-switch
               .checked=${this.config.show_cleared ?? false}
-              @change=${(e: any) => this._valueChanged('show_cleared', e.target.checked)}
+              @change=${(e: Event) =>
+                this._valueChanged('show_cleared', (e.target as HTMLInputElement).checked)}
             ></ha-switch>
           </div>
 
@@ -1237,7 +1014,8 @@ export class EmergencyAlertsCardEditor extends LitElement {
             <label>Show Escalated Alerts</label>
             <ha-switch
               .checked=${this.config.show_escalated ?? true}
-              @change=${(e: any) => this._valueChanged('show_escalated', e.target.checked)}
+              @change=${(e: Event) =>
+                this._valueChanged('show_escalated', (e.target as HTMLInputElement).checked)}
             ></ha-switch>
           </div>
 
@@ -1245,7 +1023,8 @@ export class EmergencyAlertsCardEditor extends LitElement {
             <label>Compact Mode</label>
             <ha-switch
               .checked=${this.config.compact_mode ?? false}
-              @change=${(e: any) => this._valueChanged('compact_mode', e.target.checked)}
+              @change=${(e: Event) =>
+                this._valueChanged('compact_mode', (e.target as HTMLInputElement).checked)}
             ></ha-switch>
           </div>
 
@@ -1253,7 +1032,8 @@ export class EmergencyAlertsCardEditor extends LitElement {
             <label>Show Timestamps</label>
             <ha-switch
               .checked=${this.config.show_timestamps ?? true}
-              @change=${(e: any) => this._valueChanged('show_timestamps', e.target.checked)}
+              @change=${(e: Event) =>
+                this._valueChanged('show_timestamps', (e.target as HTMLInputElement).checked)}
             ></ha-switch>
           </div>
 
@@ -1261,7 +1041,8 @@ export class EmergencyAlertsCardEditor extends LitElement {
             <label>Show Group Labels</label>
             <ha-switch
               .checked=${this.config.show_group_labels ?? true}
-              @change=${(e: any) => this._valueChanged('show_group_labels', e.target.checked)}
+              @change=${(e: Event) =>
+                this._valueChanged('show_group_labels', (e.target as HTMLInputElement).checked)}
             ></ha-switch>
           </div>
 
@@ -1269,7 +1050,8 @@ export class EmergencyAlertsCardEditor extends LitElement {
             <label>Show Severity Icons</label>
             <ha-switch
               .checked=${this.config.show_severity_icons ?? true}
-              @change=${(e: any) => this._valueChanged('show_severity_icons', e.target.checked)}
+              @change=${(e: Event) =>
+                this._valueChanged('show_severity_icons', (e.target as HTMLInputElement).checked)}
             ></ha-switch>
           </div>
 
@@ -1279,8 +1061,11 @@ export class EmergencyAlertsCardEditor extends LitElement {
               <ha-textfield
                 type="number"
                 .value=${String(this.config.max_alerts_per_group || 10)}
-                @input=${(e: any) =>
-                  this._valueChanged('max_alerts_per_group', parseInt(e.target.value) || 10)}
+                @input=${(e: Event) =>
+                  this._valueChanged(
+                    'max_alerts_per_group',
+                    parseInt((e.target as HTMLInputElement).value) || 10
+                  )}
                 min="1"
                 max="100"
               ></ha-textfield>
@@ -1296,7 +1081,11 @@ export class EmergencyAlertsCardEditor extends LitElement {
             <label>Show Acknowledge Button</label>
             <ha-switch
               .checked=${this.config.show_acknowledge_button ?? true}
-              @change=${(e: any) => this._valueChanged('show_acknowledge_button', e.target.checked)}
+              @change=${(e: Event) =>
+                this._valueChanged(
+                  'show_acknowledge_button',
+                  (e.target as HTMLInputElement).checked
+                )}
             ></ha-switch>
           </div>
 
@@ -1304,7 +1093,8 @@ export class EmergencyAlertsCardEditor extends LitElement {
             <label>Show Clear Button</label>
             <ha-switch
               .checked=${this.config.show_clear_button ?? true}
-              @change=${(e: any) => this._valueChanged('show_clear_button', e.target.checked)}
+              @change=${(e: Event) =>
+                this._valueChanged('show_clear_button', (e.target as HTMLInputElement).checked)}
             ></ha-switch>
           </div>
 
@@ -1312,7 +1102,8 @@ export class EmergencyAlertsCardEditor extends LitElement {
             <label>Show Escalate Button</label>
             <ha-switch
               .checked=${this.config.show_escalate_button ?? true}
-              @change=${(e: any) => this._valueChanged('show_escalate_button', e.target.checked)}
+              @change=${(e: Event) =>
+                this._valueChanged('show_escalate_button', (e.target as HTMLInputElement).checked)}
             ></ha-switch>
           </div>
 
@@ -1321,10 +1112,8 @@ export class EmergencyAlertsCardEditor extends LitElement {
             <div class="field-input">
               <ha-select
                 .value=${this.config.button_style || 'compact'}
-                @change=${(e: Event) => {
-                  const target = e.target as any;
-                  this._valueChanged('button_style', target.value);
-                }}
+                @change=${(e: Event) =>
+                  this._valueChanged('button_style', (e.target as HTMLSelectElement).value)}
               >
                 <mwc-list-item value="compact">Compact</mwc-list-item>
                 <mwc-list-item value="full">Full</mwc-list-item>
@@ -1374,8 +1163,11 @@ export class EmergencyAlertsCardEditor extends LitElement {
               <ha-textfield
                 type="number"
                 .value=${String(this.config.refresh_interval || 30)}
-                @input=${(e: any) =>
-                  this._valueChanged('refresh_interval', parseInt(e.target.value) || 30)}
+                @input=${(e: Event) =>
+                  this._valueChanged(
+                    'refresh_interval',
+                    parseInt((e.target as HTMLInputElement).value) || 30
+                  )}
                 min="5"
                 max="300"
               ></ha-textfield>
@@ -1388,10 +1180,11 @@ export class EmergencyAlertsCardEditor extends LitElement {
   }
 }
 
-// Register the card and editor
+// Register the custom elements
 customElements.define('emergency-alerts-card', EmergencyAlertsCard);
 customElements.define('emergency-alerts-card-editor', EmergencyAlertsCardEditor);
 
+// Declare types for Home Assistant
 declare global {
   interface Window {
     customCards: Array<{
@@ -1402,6 +1195,7 @@ declare global {
   }
 }
 
+// Register with Home Assistant
 (window.customCards = window.customCards || []).push({
   type: 'emergency-alerts-card',
   name: 'Emergency Alerts Card',

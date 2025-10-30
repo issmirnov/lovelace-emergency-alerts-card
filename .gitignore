@@ -7,6 +7,10 @@ yarn-error.log*
 # Build output
 build/
 
+# TypeScript declarations (generated)
+*.d.ts
+*.d.ts.map
+
 # Coverage reports
 coverage/
 .nyc_output/
@@ -33,4 +37,5 @@ Thumbs.db
 
 # Keep dist/ directory and built card for HACS
 !dist/
-!dist/emergency-alerts-card.js 
+!dist/emergency-alerts-card.js
+!dist/emergency-alerts-card.js.map 

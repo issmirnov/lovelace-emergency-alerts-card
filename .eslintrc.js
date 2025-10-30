@@ -43,5 +43,15 @@ module.exports = {
         'no-undef': 'off', // TypeScript handles this
       },
     },
+    {
+      files: ['**/__tests__/**/*.ts', '**/*.test.ts', '**/test-setup.ts'],
+      parser: '@typescript-eslint/parser',
+      plugins: ['@typescript-eslint'],
+      rules: {
+        '@typescript-eslint/no-explicit-any': 'off', // Allow any in test files
+        '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+        'no-undef': 'off',
+      },
+    },
   ],
 }; 
