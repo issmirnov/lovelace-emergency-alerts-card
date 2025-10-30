@@ -219,7 +219,7 @@ export declare class EmergencyAlertsCardEditor extends LitElement {
             attribute: boolean;
         };
     };
-    static styles: any;
+    static styles: import("lit").CSSResult;
     setConfig(config: CardConfig): void;
     private _valueChanged;
     private _fireConfigChanged;

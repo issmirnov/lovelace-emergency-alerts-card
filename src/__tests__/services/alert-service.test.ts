@@ -26,11 +26,9 @@ describe('AlertService', () => {
     test('calls Home Assistant acknowledge service', async () => {
       await alertService.acknowledge('binary_sensor.test');
 
-      expect(mockHass.callService).toHaveBeenCalledWith(
-        'emergency_alerts',
-        'acknowledge',
-        { entity_id: 'binary_sensor.test' }
-      );
+      expect(mockHass.callService).toHaveBeenCalledWith('emergency_alerts', 'acknowledge', {
+        entity_id: 'binary_sensor.test',
+      });
     });
 
     test('handles errors and notifies callback', async () => {
@@ -117,11 +115,9 @@ describe('AlertService', () => {
     test('calls Home Assistant acknowledge service for de-escalation', async () => {
       await alertService.deEscalate('binary_sensor.test');
 
-      expect(mockHass.callService).toHaveBeenCalledWith(
-        'emergency_alerts',
-        'acknowledge',
-        { entity_id: 'binary_sensor.test' }
-      );
+      expect(mockHass.callService).toHaveBeenCalledWith('emergency_alerts', 'acknowledge', {
+        entity_id: 'binary_sensor.test',
+      });
     });
 
     test('handles errors and notifies callback', async () => {

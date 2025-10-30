@@ -99,7 +99,7 @@ export function discoverAlertEntities(
  */
 export function createEntityStateHash(entities: EmergencyAlertEntity[]): string {
   return entities
-    .map((e) => `${e.entity_id}:${e.last_updated}`)
+    .map(e => `${e.entity_id}:${e.last_updated}`)
     .sort()
     .join('|');
 }

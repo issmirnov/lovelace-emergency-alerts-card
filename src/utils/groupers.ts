@@ -19,7 +19,7 @@ export function groupAlertsBySeverity(alerts: Alert[]): GroupedAlerts {
   const grouped: GroupedAlerts = {};
 
   // Initialize empty groups for all severity levels
-  SEVERITY_ORDER.forEach((severity) => {
+  SEVERITY_ORDER.forEach(severity => {
     grouped[severity] = [];
   });
 
@@ -118,5 +118,5 @@ export function getGroupCount(alerts: Alert[], groupBy: string): number {
     return alerts.length;
   }
   // For other grouping, show only active alerts (state === 'on')
-  return alerts.filter((a) => a.state === 'on').length;
+  return alerts.filter(a => a.state === 'on').length;
 }

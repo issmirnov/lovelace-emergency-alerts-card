@@ -5,9 +5,10 @@
  * @module emergency-alerts-card
  */
 
-import { LitElement, html, PropertyValues, TemplateResult } from 'lit';
+import { LitElement, html, css, PropertyValues, TemplateResult } from 'lit';
 import {
   HomeAssistant,
+  HassEntity,
   CardConfig,
   Alert,
   GroupedAlerts,
@@ -152,11 +153,7 @@ export class EmergencyAlertsCard extends LitElement {
     if (!this.hass || !this.config) return false;
 
     const patterns = this.config.entity_patterns || ['binary_sensor.emergency_*'];
-    const alertEntities = discoverAlertEntities(
-      this.hass.states,
-      patterns,
-      this.patternCache
-    );
+    const alertEntities = discoverAlertEntities(this.hass.states, patterns, this.patternCache);
 
     const currentHash = createEntityStateHash(alertEntities);
     const hasChanges = currentHash !== this.lastStatesHash;
@@ -188,9 +185,7 @@ export class EmergencyAlertsCard extends LitElement {
     const allAlerts: Alert[] = alertEntities.map(entityToAlert);
 
     // Filter alerts based on configuration
-    const filteredAlerts = allAlerts.filter((alert) =>
-      shouldShowAlert(alert, this.config!)
-    );
+    const filteredAlerts = allAlerts.filter(alert => shouldShowAlert(alert, this.config!));
 
     // Sort alerts
     sortAlerts(filteredAlerts, this.config);
@@ -340,7 +335,7 @@ export class EmergencyAlertsCard extends LitElement {
       return html`<div class="card">Loading...</div>`;
     }
 
-    const totalActive = this.alerts.filter((a) => a.state === 'on').length;
+    const totalActive = this.alerts.filter(a => a.state === 'on').length;
     const cardClass = this.config?.compact_mode ? 'compact' : '';
 
     return html`
@@ -404,7 +399,7 @@ export class EmergencyAlertsCard extends LitElement {
       <div class="group-header ${severityClass}">
         <span>${groupTitle} (${groupCount})</span>
       </div>
-      ${displayAlerts.map((alert) => this._renderAlert(alert))}
+      ${displayAlerts.map(alert => this._renderAlert(alert))}
     `;
   }
 
@@ -481,8 +476,7 @@ export class EmergencyAlertsCard extends LitElement {
     return html`
       <div class="action-buttons">
         ${this._renderAcknowledgeButton(alert, isLoading)}
-        ${this._renderEscalateButton(alert, isLoading)}
-        ${this._renderClearButton(alert, isLoading)}
+        ${this._renderEscalateButton(alert, isLoading)} ${this._renderClearButton(alert, isLoading)}
       </div>
     `;
   }
@@ -493,15 +487,8 @@ export class EmergencyAlertsCard extends LitElement {
    * @param isLoading Whether action is in progress
    * @returns Lit template
    */
-  private _renderAcknowledgeButton(
-    alert: Alert,
-    isLoading: boolean
-  ): TemplateResult | string {
-    if (
-      !this.config?.show_acknowledge_button ||
-      alert.acknowledged ||
-      alert.escalated
-    ) {
+  private _renderAcknowledgeButton(alert: Alert, isLoading: boolean): TemplateResult | string {
+    if (!this.config?.show_acknowledge_button || alert.acknowledged || alert.escalated) {
       return '';
     }
 
@@ -524,10 +511,7 @@ export class EmergencyAlertsCard extends LitElement {
    * @param isLoading Whether action is in progress
    * @returns Lit template
    */
-  private _renderEscalateButton(
-    alert: Alert,
-    isLoading: boolean
-  ): TemplateResult | string {
+  private _renderEscalateButton(alert: Alert, isLoading: boolean): TemplateResult | string {
     if (!this.config?.show_escalate_button || alert.cleared) {
       return '';
     }
@@ -784,25 +768,25 @@ export class EmergencyAlertsCardEditor extends LitElement {
   }
 
   private _addArrayItem(field: string): void {
-    const currentArray = (this.config as Record<string, unknown>)?.[field] as string[] || [];
+    const currentArray = ((this.config as Record<string, unknown>)?.[field] as string[]) || [];
     this._updateStringArray(field, [...currentArray, '']);
   }
 
   private _removeArrayItem(field: string, index: number): void {
-    const currentArray = (this.config as Record<string, unknown>)?.[field] as string[] || [];
+    const currentArray = ((this.config as Record<string, unknown>)?.[field] as string[]) || [];
     const newArray = currentArray.filter((_, i) => i !== index);
     this._updateStringArray(field, newArray);
   }
 
   private _updateArrayItem(field: string, index: number, value: string): void {
-    const currentArray = (this.config as Record<string, unknown>)?.[field] as string[] || [];
+    const currentArray = ((this.config as Record<string, unknown>)?.[field] as string[]) || [];
     const newArray = [...currentArray];
     newArray[index] = value;
     this._updateStringArray(field, newArray);
   }
 
   private _toggleFilterValue(field: string, value: string, checked: boolean): void {
-    const currentArray = (this.config as Record<string, unknown>)?.[field] as string[] || [];
+    const currentArray = ((this.config as Record<string, unknown>)?.[field] as string[]) || [];
     let newArray: string[];
 
     if (checked) {
@@ -828,7 +812,7 @@ export class EmergencyAlertsCardEditor extends LitElement {
       .sort((a, b) => a.entity_id.localeCompare(b.entity_id));
 
     return summaryEntities.map(
-      (entity) => html`
+      entity => html`
         <mwc-list-item value="${entity.entity_id}">
           ${entity.attributes?.friendly_name || entity.entity_id}
         </mwc-list-item>
@@ -878,7 +862,7 @@ export class EmergencyAlertsCardEditor extends LitElement {
     options: Array<{ value: string; label: string }>,
     helpText?: string
   ) {
-    const selectedValues = (this.config as Record<string, unknown>)?.[field] as string[] || [];
+    const selectedValues = ((this.config as Record<string, unknown>)?.[field] as string[]) || [];
 
     return html`
       <div class="field">
@@ -891,7 +875,11 @@ export class EmergencyAlertsCardEditor extends LitElement {
                   <ha-checkbox
                     .checked=${selectedValues.includes(option.value)}
                     @change=${(e: Event) =>
-                      this._toggleFilterValue(field, option.value, (e.target as HTMLInputElement).checked)}
+                      this._toggleFilterValue(
+                        field,
+                        option.value,
+                        (e.target as HTMLInputElement).checked
+                      )}
                   ></ha-checkbox>
                   <span class="checkbox-label">${option.label}</span>
                 </div>
@@ -905,7 +893,7 @@ export class EmergencyAlertsCardEditor extends LitElement {
   }
 
   private _renderStringArrayEditor(field: string, label: string, helpText?: string) {
-    const values = (this.config as Record<string, unknown>)?.[field] as string[] || [];
+    const values = ((this.config as Record<string, unknown>)?.[field] as string[]) || [];
 
     return html`
       <div class="field">
@@ -917,7 +905,8 @@ export class EmergencyAlertsCardEditor extends LitElement {
                 <div class="array-item">
                   <ha-textfield
                     .value=${value}
-                    @input=${(e: Event) => this._updateArrayItem(field, index, (e.target as HTMLInputElement).value)}
+                    @input=${(e: Event) =>
+                      this._updateArrayItem(field, index, (e.target as HTMLInputElement).value)}
                     placeholder="Enter value..."
                   ></ha-textfield>
                   <mwc-button
@@ -956,7 +945,8 @@ export class EmergencyAlertsCardEditor extends LitElement {
             <div class="field-input">
               <ha-select
                 .value=${this.config.summary_entity || ''}
-                @change=${(e: Event) => this._valueChanged('summary_entity', (e.target as HTMLSelectElement).value)}
+                @change=${(e: Event) =>
+                  this._valueChanged('summary_entity', (e.target as HTMLSelectElement).value)}
               >
                 <mwc-list-item value="">Auto-detect (recommended)</mwc-list-item>
                 ${this._getSummaryEntityOptions()}
@@ -970,7 +960,8 @@ export class EmergencyAlertsCardEditor extends LitElement {
             <div class="field-input">
               <ha-select
                 .value=${this.config.group_by || 'severity'}
-                @change=${(e: Event) => this._valueChanged('group_by', (e.target as HTMLSelectElement).value)}
+                @change=${(e: Event) =>
+                  this._valueChanged('group_by', (e.target as HTMLSelectElement).value)}
               >
                 <mwc-list-item value="severity">Severity</mwc-list-item>
                 <mwc-list-item value="group">Group</mwc-list-item>
@@ -985,7 +976,8 @@ export class EmergencyAlertsCardEditor extends LitElement {
             <div class="field-input">
               <ha-select
                 .value=${this.config.sort_by || 'first_triggered'}
-                @change=${(e: Event) => this._valueChanged('sort_by', (e.target as HTMLSelectElement).value)}
+                @change=${(e: Event) =>
+                  this._valueChanged('sort_by', (e.target as HTMLSelectElement).value)}
               >
                 <mwc-list-item value="first_triggered">First Triggered</mwc-list-item>
                 <mwc-list-item value="severity">Severity</mwc-list-item>
@@ -1004,7 +996,8 @@ export class EmergencyAlertsCardEditor extends LitElement {
             <label>Show Acknowledged Alerts</label>
             <ha-switch
               .checked=${this.config.show_acknowledged ?? true}
-              @change=${(e: Event) => this._valueChanged('show_acknowledged', (e.target as HTMLInputElement).checked)}
+              @change=${(e: Event) =>
+                this._valueChanged('show_acknowledged', (e.target as HTMLInputElement).checked)}
             ></ha-switch>
           </div>
 
@@ -1012,7 +1005,8 @@ export class EmergencyAlertsCardEditor extends LitElement {
             <label>Show Cleared Alerts</label>
             <ha-switch
               .checked=${this.config.show_cleared ?? false}
-              @change=${(e: Event) => this._valueChanged('show_cleared', (e.target as HTMLInputElement).checked)}
+              @change=${(e: Event) =>
+                this._valueChanged('show_cleared', (e.target as HTMLInputElement).checked)}
             ></ha-switch>
           </div>
 
@@ -1020,7 +1014,8 @@ export class EmergencyAlertsCardEditor extends LitElement {
             <label>Show Escalated Alerts</label>
             <ha-switch
               .checked=${this.config.show_escalated ?? true}
-              @change=${(e: Event) => this._valueChanged('show_escalated', (e.target as HTMLInputElement).checked)}
+              @change=${(e: Event) =>
+                this._valueChanged('show_escalated', (e.target as HTMLInputElement).checked)}
             ></ha-switch>
           </div>
 
@@ -1028,7 +1023,8 @@ export class EmergencyAlertsCardEditor extends LitElement {
             <label>Compact Mode</label>
             <ha-switch
               .checked=${this.config.compact_mode ?? false}
-              @change=${(e: Event) => this._valueChanged('compact_mode', (e.target as HTMLInputElement).checked)}
+              @change=${(e: Event) =>
+                this._valueChanged('compact_mode', (e.target as HTMLInputElement).checked)}
             ></ha-switch>
           </div>
 
@@ -1036,7 +1032,8 @@ export class EmergencyAlertsCardEditor extends LitElement {
             <label>Show Timestamps</label>
             <ha-switch
               .checked=${this.config.show_timestamps ?? true}
-              @change=${(e: Event) => this._valueChanged('show_timestamps', (e.target as HTMLInputElement).checked)}
+              @change=${(e: Event) =>
+                this._valueChanged('show_timestamps', (e.target as HTMLInputElement).checked)}
             ></ha-switch>
           </div>
 
@@ -1044,7 +1041,8 @@ export class EmergencyAlertsCardEditor extends LitElement {
             <label>Show Group Labels</label>
             <ha-switch
               .checked=${this.config.show_group_labels ?? true}
-              @change=${(e: Event) => this._valueChanged('show_group_labels', (e.target as HTMLInputElement).checked)}
+              @change=${(e: Event) =>
+                this._valueChanged('show_group_labels', (e.target as HTMLInputElement).checked)}
             ></ha-switch>
           </div>
 
@@ -1052,7 +1050,8 @@ export class EmergencyAlertsCardEditor extends LitElement {
             <label>Show Severity Icons</label>
             <ha-switch
               .checked=${this.config.show_severity_icons ?? true}
-              @change=${(e: Event) => this._valueChanged('show_severity_icons', (e.target as HTMLInputElement).checked)}
+              @change=${(e: Event) =>
+                this._valueChanged('show_severity_icons', (e.target as HTMLInputElement).checked)}
             ></ha-switch>
           </div>
 
@@ -1063,7 +1062,10 @@ export class EmergencyAlertsCardEditor extends LitElement {
                 type="number"
                 .value=${String(this.config.max_alerts_per_group || 10)}
                 @input=${(e: Event) =>
-                  this._valueChanged('max_alerts_per_group', parseInt((e.target as HTMLInputElement).value) || 10)}
+                  this._valueChanged(
+                    'max_alerts_per_group',
+                    parseInt((e.target as HTMLInputElement).value) || 10
+                  )}
                 min="1"
                 max="100"
               ></ha-textfield>
@@ -1079,7 +1081,11 @@ export class EmergencyAlertsCardEditor extends LitElement {
             <label>Show Acknowledge Button</label>
             <ha-switch
               .checked=${this.config.show_acknowledge_button ?? true}
-              @change=${(e: Event) => this._valueChanged('show_acknowledge_button', (e.target as HTMLInputElement).checked)}
+              @change=${(e: Event) =>
+                this._valueChanged(
+                  'show_acknowledge_button',
+                  (e.target as HTMLInputElement).checked
+                )}
             ></ha-switch>
           </div>
 
@@ -1087,7 +1093,8 @@ export class EmergencyAlertsCardEditor extends LitElement {
             <label>Show Clear Button</label>
             <ha-switch
               .checked=${this.config.show_clear_button ?? true}
-              @change=${(e: Event) => this._valueChanged('show_clear_button', (e.target as HTMLInputElement).checked)}
+              @change=${(e: Event) =>
+                this._valueChanged('show_clear_button', (e.target as HTMLInputElement).checked)}
             ></ha-switch>
           </div>
 
@@ -1095,7 +1102,8 @@ export class EmergencyAlertsCardEditor extends LitElement {
             <label>Show Escalate Button</label>
             <ha-switch
               .checked=${this.config.show_escalate_button ?? true}
-              @change=${(e: Event) => this._valueChanged('show_escalate_button', (e.target as HTMLInputElement).checked)}
+              @change=${(e: Event) =>
+                this._valueChanged('show_escalate_button', (e.target as HTMLInputElement).checked)}
             ></ha-switch>
           </div>
 
@@ -1104,7 +1112,8 @@ export class EmergencyAlertsCardEditor extends LitElement {
             <div class="field-input">
               <ha-select
                 .value=${this.config.button_style || 'compact'}
-                @change=${(e: Event) => this._valueChanged('button_style', (e.target as HTMLSelectElement).value)}
+                @change=${(e: Event) =>
+                  this._valueChanged('button_style', (e.target as HTMLSelectElement).value)}
               >
                 <mwc-list-item value="compact">Compact</mwc-list-item>
                 <mwc-list-item value="full">Full</mwc-list-item>
@@ -1155,7 +1164,10 @@ export class EmergencyAlertsCardEditor extends LitElement {
                 type="number"
                 .value=${String(this.config.refresh_interval || 30)}
                 @input=${(e: Event) =>
-                  this._valueChanged('refresh_interval', parseInt((e.target as HTMLInputElement).value) || 30)}
+                  this._valueChanged(
+                    'refresh_interval',
+                    parseInt((e.target as HTMLInputElement).value) || 30
+                  )}
                 min="5"
                 max="300"
               ></ha-textfield>

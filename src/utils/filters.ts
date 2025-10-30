@@ -52,7 +52,7 @@ export function matchesEntityPattern(
   patterns: string[],
   patternCache?: Map<string, RegExp>
 ): boolean {
-  return patterns.some((pattern) => {
+  return patterns.some(pattern => {
     if (pattern.includes('*')) {
       // Use cached regex if available, otherwise compile and cache
       let regex: RegExp;

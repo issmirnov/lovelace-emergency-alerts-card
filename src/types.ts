@@ -37,11 +37,7 @@ export interface ServiceData {
  */
 export interface HomeAssistant {
   states: HassEntities;
-  callService: (
-    domain: string,
-    service: string,
-    serviceData?: ServiceData
-  ) => Promise<void>;
+  callService: (domain: string, service: string, serviceData?: ServiceData) => Promise<void>;
   config: {
     language: string;
     [key: string]: unknown;

@@ -219,8 +219,8 @@ describe('entity-discovery', () => {
       const entities = discoverAlertEntities(states, patterns);
 
       expect(entities).toHaveLength(2);
-      expect(entities.find((e) => e.entity_id === 'binary_sensor.emergency_fire')).toBeDefined();
-      expect(entities.find((e) => e.entity_id === 'binary_sensor.emergency_water')).toBeDefined();
+      expect(entities.find(e => e.entity_id === 'binary_sensor.emergency_fire')).toBeDefined();
+      expect(entities.find(e => e.entity_id === 'binary_sensor.emergency_water')).toBeDefined();
     });
 
     test('discovers entities with emergency attributes', () => {

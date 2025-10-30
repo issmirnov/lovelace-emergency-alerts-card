@@ -121,15 +121,11 @@ describe('filters', () => {
       const patterns = ['binary_sensor.emergency_*'];
       const cache = new Map<string, RegExp>();
 
-      expect(matchesEntityPattern('binary_sensor.emergency_fire', patterns, cache)).toBe(
-        true
-      );
+      expect(matchesEntityPattern('binary_sensor.emergency_fire', patterns, cache)).toBe(true);
       expect(cache.size).toBe(1);
 
       // Second call should use cached regex
-      expect(matchesEntityPattern('binary_sensor.emergency_water', patterns, cache)).toBe(
-        true
-      );
+      expect(matchesEntityPattern('binary_sensor.emergency_water', patterns, cache)).toBe(true);
       expect(cache.size).toBe(1); // Cache size unchanged
     });
 
