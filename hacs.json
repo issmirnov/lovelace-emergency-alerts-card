@@ -1,6 +1,6 @@
 {
   "name": "Emergency Alerts Card",
   "render_readme": true,
-  "filename": "emergency-alerts-card.js",
+  "filename": "dist/emergency-alerts-card.js",
   "homeassistant": "2023.8.0"
 } 
