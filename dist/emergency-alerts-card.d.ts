@@ -117,7 +117,7 @@ export declare class EmergencyAlertsCard extends LitElement {
     private _handleSnooze;
     /**
      * Determines if action buttons should be shown for an alert (v2.0)
-     * @param alert Alert to check
+     * @param _alert Alert to check (unused - actions always shown for toggleable switches)
      * @returns true if actions should be displayed
      */
     private _shouldShowActions;

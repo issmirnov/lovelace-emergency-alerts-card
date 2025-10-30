@@ -66,13 +66,17 @@ const $=globalThis,x=$.trustedTypes,A=x?x.createPolicy("lit-html",{createHTML:t=
   .alert-acknowledged {
     opacity: 0.7;
     background: rgba(76, 175, 80, 0.1);
-    transition: opacity 0.3s ease, background 0.3s ease;
+    transition:
+      opacity 0.3s ease,
+      background 0.3s ease;
   }
 
   .alert-snoozed {
     opacity: 0.6;
     background: rgba(255, 152, 0, 0.1);
-    transition: opacity 0.3s ease, background 0.3s ease;
+    transition:
+      opacity 0.3s ease,
+      background 0.3s ease;
   }
 
   .alert-escalated {
@@ -84,7 +88,9 @@ const $=globalThis,x=$.trustedTypes,A=x?x.createPolicy("lit-html",{createHTML:t=
   .alert-resolved {
     opacity: 0.5;
     background: rgba(33, 150, 243, 0.1);
-    transition: opacity 0.5s ease, background 0.5s ease;
+    transition:
+      opacity 0.5s ease,
+      background 0.5s ease;
   }
 
   /* v2.0 State-based classes for additional styling */
@@ -441,9 +447,7 @@ const $=globalThis,x=$.trustedTypes,A=x?x.createPolicy("lit-html",{createHTML:t=
     }
   }
 `;class lt{constructor(t,e){this.hass=t,this.onError=e}_convertToSwitchId(t,e){return t.replace("binary_sensor.emergency_","switch.emergency_")+`_${e}`}handleError(t,e,s){const i=`Failed to ${t}`;console.error(`[Emergency Alerts Card] ${i}:`,s),console.error(`Entity: ${e}`),this.onError&&this.onError({message:i,entity_id:e,error:s})}async acknowledge(t){try{const e=this._convertToSwitchId(t,"acknowledged");await this.hass.callService("switch","toggle",{entity_id:e})}catch(e){throw this.handleError("acknowledge alert",t,e),e}}async snooze(t){try{const e=this._convertToSwitchId(t,"snoozed");await this.hass.callService("switch","turn_on",{entity_id:e})}catch(e){throw this.handleError("snooze alert",t,e),e}}async resolve(t){try{const e=this._convertToSwitchId(t,"resolved");await this.hass.callService("switch","toggle",{entity_id:e})}catch(e){throw this.handleError("resolve alert",t,e),e}}updateHass(t){this.hass=t}setErrorCallback(t){this.onError=t}}function ct(t,e,s){return e.some(e=>{if(e.includes("*")){let i;return s&&s.has(e)?i=s.get(e):(i=new RegExp(e.replace(/\*/g,".*")),s&&s.set(e,i)),i.test(t)}return t===e})}const dt={critical:0,warning:1,info:2};const ht=["critical","warning","info"];function ut(t,e){switch(e.group_by){case"group":return function(t){const e={};for(const s of t){const t=s.group||"other";e[t]||(e[t]=[]),e[t].push(s)}return e}(t);case"status":return function(t){const e={active:[],acknowledged:[],snoozed:[],escalated:[],resolved:[]};for(const s of t)e[s.status].push(s);return e}(t);case"none":return function(t){return{all:t}}(t);default:return function(t){const e={};ht.forEach(t=>{e[t]=[]});for(const s of t)e[s.severity]||(e[s.severity]=[]),e[s.severity].push(s);return e}(t)}}function pt(t){const e=t.attributes;return e.resolved?"resolved":e.escalated?"escalated":e.snoozed?"snoozed":e.acknowledged?"acknowledged":"on"===t.state?"active":"inactive"}function gt(t){return!(!t.attributes||!t.attributes.severity&&!t.attributes.group)}function ft(t){const e=t.attributes;return{entity_id:t.entity_id,name:e.friendly_name||t.entity_id,state:t.state,severity:e.severity||"info",group:e.group||"other",acknowledged:!!e.acknowledged,escalated:!!e.escalated,snoozed:!!e.snoozed,resolved:!!e.resolved,first_triggered:e.first_triggered,last_cleared:e.last_cleared,snooze_until:e.snooze_until,status:pt(t)}}function _t(t,e,s){const i=[];for(const r of Object.values(t)){const t=ct(r.entity_id,e,s),o=gt(r);(t||o)&&i.push(r)}return i}class vt extends ot{constructor(){super(...arguments),this.alerts=[],this.grouped={},this.loadingActions=new Set,this.patternCache=new Map,this.lastStatesHash=""}static get properties(){return{hass:{attribute:!1},config:{attribute:!1},alerts:{type:Array,state:!0},grouped:{type:Object,state:!0},loadingActions:{type:Object,state:!0},currentError:{type:Object,state:!0}}}setConfig(t){if(!t||!t.type)throw new Error("Invalid configuration");this.config={show_acknowledged:!0,show_snoozed:!0,show_resolved:!1,show_escalated:!0,group_by:"severity",sort_by:"first_triggered",severity_filter:["critical","warning","info"],group_filter:[],status_filter:["active","acknowledged","snoozed","escalated"],compact_mode:!1,show_timestamps:!0,show_group_labels:!0,show_severity_icons:!0,show_status_badge:!0,max_alerts_per_group:50,show_acknowledge_button:!0,show_snooze_button:!0,show_resolve_button:!0,button_style:"compact",entity_patterns:["binary_sensor.emergency_*"],refresh_interval:30,...t},this._startAutoRefresh()}updated(t){super.updated(t),t.has("hass")&&this.hass&&(this.alertService?this.alertService.updateHass(this.hass):this.alertService=new lt(this.hass,this._handleError.bind(this)),this._hasRelevantChanges()&&this._updateAlerts())}_hasRelevantChanges(){if(!this.hass||!this.config)return!1;const t=this.config.entity_patterns||["binary_sensor.emergency_*"],e=_t(this.hass.states,t,this.patternCache),s=e.map(t=>`${t.entity_id}:${t.last_updated}`).sort().join("|");const i=s!==this.lastStatesHash;return i&&(this.lastStatesHash=s),i}_updateAlerts(){if(!this.hass||!this.config)return;const t=this.config.entity_patterns||["binary_sensor.emergency_*"],e=_t(this.hass.states,t,this.patternCache).map(ft).filter(t=>function(t,e){return!(e.severity_filter&&!e.severity_filter.includes(t.severity)||e.group_filter&&e.group_filter.length>0&&!e.group_filter.includes(t.group)||e.status_filter&&!e.status_filter.includes(t.status)||!e.show_acknowledged&&t.acknowledged||!e.show_snoozed&&t.snoozed||!e.show_resolved&&t.resolved||!e.show_escalated&&t.escalated)}(t,this.config));var s,i;s=e,i=this.config,s.sort((t,e)=>{switch(i.sort_by){case"first_triggered":{const s=t.first_triggered?new Date(t.first_triggered).getTime():0;return(e.first_triggered?new Date(e.first_triggered).getTime():0)-s}case"severity":return(void 0!==dt[t.severity]?dt[t.severity]:3)-(void 0!==dt[e.severity]?dt[e.severity]:3);case"name":return t.name.localeCompare(e.name);case"group":return t.group.localeCompare(e.group);default:return 0}}),this.alerts=e,this.grouped=ut(e,this.config)}_startAutoRefresh(){this.refreshInterval&&clearInterval(this.refreshInterval),this.config?.refresh_interval&&this.config.refresh_interval>0&&(this.refreshInterval=window.setInterval(()=>{this._updateAlerts()},1e3*this.config.refresh_interval))}disconnectedCallback(){super.disconnectedCallback(),this.refreshInterval&&clearInterval(this.refreshInterval)}_handleError(t){this.currentError=t,this.requestUpdate(),setTimeout(()=>{this.currentError===t&&(this.currentError=void 0,this.requestUpdate())},5e3)}_dismissError(){this.currentError=void 0}async _handleAcknowledge(t){if(this.alertService){this.loadingActions.add(t),this.requestUpdate();try{await this.alertService.acknowledge(t)}finally{this.loadingActions.delete(t),this.requestUpdate()}}}async _handleResolve(t){if(this.alertService){this.loadingActions.add(t),this.requestUpdate();try{await this.alertService.resolve(t)}finally{this.loadingActions.delete(t),this.requestUpdate()}}}async _handleSnooze(t){if(this.alertService){this.loadingActions.add(t),this.requestUpdate();try{await this.alertService.snooze(t)}finally{this.loadingActions.delete(t),this.requestUpdate()}}}_shouldShowActions(t){return!0}_formatSnoozeTime(t){if(!t)return"";return`until ${new Date(t).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})}`}_renderStatusBadge(t){return this.config?.show_status_badge?D`
-      <span class="status-badge ${t.status}">
-        ${t.status.toUpperCase()}
-      </span>
+      <span class="status-badge ${t.status}"> ${t.status.toUpperCase()} </span>
     `:""}render(){if(!this.hass)return D`<div class="card">Loading...</div>`;const t=this.alerts.filter(t=>"on"===t.state).length,e=this.config?.compact_mode?"compact":"";return D`
       <div class="card ${e}">
         <div class="summary-header">Emergency Alerts (${t} active)</div>
@@ -478,8 +482,7 @@ const $=globalThis,x=$.trustedTypes,A=x?x.createPolicy("lit-html",{createHTML:t=
     `:""}_renderAlertContent(t){return D`
       <div class="alert-content">
         <div class="alert-name">
-          ${t.name}
-          ${t.escalated?D`<span class="escalated-indicator">⚠️</span>`:""}
+          ${t.name} ${t.escalated?D`<span class="escalated-indicator">⚠️</span>`:""}
         </div>
         <div class="alert-meta">
           ${this.config?.show_group_labels?D`<span>${t.group}</span>`:""}
@@ -489,8 +492,7 @@ const $=globalThis,x=$.trustedTypes,A=x?x.createPolicy("lit-html",{createHTML:t=
     `}_renderAlertActions(t){const e=this.loadingActions.has(t.entity_id);return D`
       <div class="action-buttons">
         ${this._renderAcknowledgeButton(t,e)}
-        ${this._renderSnoozeButton(t,e)}
-        ${this._renderResolveButton(t,e)}
+        ${this._renderSnoozeButton(t,e)} ${this._renderResolveButton(t,e)}
       </div>
     `}_renderAcknowledgeButton(t,e){if(!this.config?.show_acknowledge_button)return"";const s=t.acknowledged,i=s?"icons_only"===this.config?.button_style?"✓":"✓ Acknowledged":"icons_only"===this.config?.button_style?"○":"Acknowledge";return D`
       <button

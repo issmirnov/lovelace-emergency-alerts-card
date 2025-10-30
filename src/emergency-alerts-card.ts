@@ -304,10 +304,10 @@ export class EmergencyAlertsCard extends LitElement {
 
   /**
    * Determines if action buttons should be shown for an alert (v2.0)
-   * @param alert Alert to check
+   * @param _alert Alert to check (unused - actions always shown for toggleable switches)
    * @returns true if actions should be displayed
    */
-  private _shouldShowActions(alert: Alert): boolean {
+  private _shouldShowActions(_alert: Alert): boolean {
     // Show actions for all alert states (switches are toggleable)
     return true;
   }
@@ -340,9 +340,7 @@ export class EmergencyAlertsCard extends LitElement {
     }
 
     return html`
-      <span class="status-badge ${alert.status}">
-        ${alert.status.toUpperCase()}
-      </span>
+      <span class="status-badge ${alert.status}"> ${alert.status.toUpperCase()} </span>
     `;
   }
 
@@ -476,8 +474,7 @@ export class EmergencyAlertsCard extends LitElement {
     return html`
       <div class="alert-content">
         <div class="alert-name">
-          ${alert.name}
-          ${alert.escalated ? html`<span class="escalated-indicator">⚠️</span>` : ''}
+          ${alert.name} ${alert.escalated ? html`<span class="escalated-indicator">⚠️</span>` : ''}
         </div>
         <div class="alert-meta">
           ${this.config?.show_group_labels ? html`<span>${alert.group}</span>` : ''}
@@ -500,8 +497,7 @@ export class EmergencyAlertsCard extends LitElement {
     return html`
       <div class="action-buttons">
         ${this._renderAcknowledgeButton(alert, isLoading)}
-        ${this._renderSnoozeButton(alert, isLoading)}
-        ${this._renderResolveButton(alert, isLoading)}
+        ${this._renderSnoozeButton(alert, isLoading)} ${this._renderResolveButton(alert, isLoading)}
       </div>
     `;
   }

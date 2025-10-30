@@ -52,13 +52,17 @@ export const cardStyles = css`
   .alert-acknowledged {
     opacity: 0.7;
     background: rgba(76, 175, 80, 0.1);
-    transition: opacity 0.3s ease, background 0.3s ease;
+    transition:
+      opacity 0.3s ease,
+      background 0.3s ease;
   }
 
   .alert-snoozed {
     opacity: 0.6;
     background: rgba(255, 152, 0, 0.1);
-    transition: opacity 0.3s ease, background 0.3s ease;
+    transition:
+      opacity 0.3s ease,
+      background 0.3s ease;
   }
 
   .alert-escalated {
@@ -70,7 +74,9 @@ export const cardStyles = css`
   .alert-resolved {
     opacity: 0.5;
     background: rgba(33, 150, 243, 0.1);
-    transition: opacity 0.5s ease, background 0.5s ease;
+    transition:
+      opacity 0.5s ease,
+      background 0.5s ease;
   }
 
   /* v2.0 State-based classes for additional styling */
