@@ -14,17 +14,18 @@ import {
 import { matchesEntityPattern } from './filters';
 
 /**
- * Determines the current status of an alert based on its attributes
- * Priority: cleared > acknowledged > escalated > active > inactive
+ * Determines the current status of an alert based on its attributes (v2.0)
+ * Priority: resolved > escalated > snoozed > acknowledged > active > inactive
  * @param entity Emergency alert entity
  * @returns Current alert status
  */
 export function getAlertStatus(entity: HassEntity): AlertStatus {
   const attrs = entity.attributes;
 
-  if (attrs.cleared) return 'cleared';
-  if (attrs.acknowledged) return 'acknowledged';
+  if (attrs.resolved) return 'resolved';
   if (attrs.escalated) return 'escalated';
+  if (attrs.snoozed) return 'snoozed';
+  if (attrs.acknowledged) return 'acknowledged';
   if (entity.state === 'on') return 'active';
   return 'inactive';
 }
@@ -39,7 +40,7 @@ export function hasEmergencyAttributes(entity: HassEntity): boolean {
 }
 
 /**
- * Converts a Home Assistant entity to an Alert object
+ * Converts a Home Assistant entity to an Alert object (v2.0)
  * @param entity Emergency alert entity from HA
  * @returns Normalized Alert object
  */
@@ -54,9 +55,11 @@ export function entityToAlert(entity: EmergencyAlertEntity): Alert {
     group: (attrs.group || 'other') as AlertGroup,
     acknowledged: !!attrs.acknowledged,
     escalated: !!attrs.escalated,
-    cleared: !!attrs.cleared,
+    snoozed: !!attrs.snoozed, // NEW in v2.0
+    resolved: !!attrs.resolved, // RENAMED from cleared
     first_triggered: attrs.first_triggered,
     last_cleared: attrs.last_cleared,
+    snooze_until: attrs.snooze_until, // NEW in v2.0
     status: getAlertStatus(entity),
   };
 }

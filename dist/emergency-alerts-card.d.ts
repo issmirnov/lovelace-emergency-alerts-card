@@ -105,26 +105,34 @@ export declare class EmergencyAlertsCard extends LitElement {
      */
     private _handleAcknowledge;
     /**
-     * Handles clear action with loading state
-     * @param entity_id Entity ID to clear
+     * Handles resolve action with loading state (v2.0 - renamed from clear)
+     * @param entity_id Entity ID to resolve
      */
-    private _handleClear;
+    private _handleResolve;
     /**
-     * Handles escalate action with loading state
-     * @param entity_id Entity ID to escalate
+     * Handles snooze action with loading state (v2.0 - NEW)
+     * Silences alert for configured duration (default 5 minutes)
+     * @param entity_id Entity ID to snooze
      */
-    private _handleEscalate;
+    private _handleSnooze;
     /**
-     * Handles de-escalate action with loading state
-     * @param entity_id Entity ID to de-escalate
-     */
-    private _handleDeEscalate;
-    /**
-     * Determines if action buttons should be shown for an alert
-     * @param alert Alert to check
+     * Determines if action buttons should be shown for an alert (v2.0)
+     * @param _alert Alert to check (unused - actions always shown for toggleable switches)
      * @returns true if actions should be displayed
      */
     private _shouldShowActions;
+    /**
+     * Formats snooze_until timestamp (v2.0 helper)
+     * @param snooze_until ISO timestamp when snooze expires
+     * @returns Formatted string like "until 2:30 PM"
+     */
+    private _formatSnoozeTime;
+    /**
+     * Renders status badge showing current alert state (v2.0)
+     * @param alert Alert to render badge for
+     * @returns Lit template
+     */
+    private _renderStatusBadge;
     /**
      * Renders the card UI
      * @returns Lit template
@@ -179,19 +187,21 @@ export declare class EmergencyAlertsCard extends LitElement {
      */
     private _renderAcknowledgeButton;
     /**
-     * Renders escalate/de-escalate button if appropriate
+     * Renders snooze button (v2.0 - NEW)
+     * Shows active state when snoozed with static timestamp
      * @param alert Alert to render button for
      * @param isLoading Whether action is in progress
      * @returns Lit template
      */
-    private _renderEscalateButton;
+    private _renderSnoozeButton;
     /**
-     * Renders clear button if appropriate
+     * Renders resolve button (v2.0 - renamed from clear)
+     * Shows active state when resolved
      * @param alert Alert to render button for
      * @param isLoading Whether action is in progress
      * @returns Lit template
      */
-    private _renderClearButton;
+    private _renderResolveButton;
     /**
      * Returns stub configuration for card picker
      * @returns Default configuration

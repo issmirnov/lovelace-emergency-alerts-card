@@ -13,37 +13,24 @@ import { HassEntity, EmergencyAlertEntity, HassEntities } from '../../types';
 
 describe('entity-discovery', () => {
   describe('getAlertStatus', () => {
-    test('returns cleared for cleared alerts', () => {
+    test('returns resolved for resolved alerts', () => {
       const entity: HassEntity = {
         entity_id: 'test',
         state: 'on',
-        attributes: { cleared: true, acknowledged: false, escalated: false },
+        attributes: { resolved: true, snoozed: false, acknowledged: false, escalated: false },
         last_changed: '',
         last_updated: '',
         context: { id: '', parent_id: null, user_id: null },
       };
 
-      expect(getAlertStatus(entity)).toBe('cleared');
-    });
-
-    test('returns acknowledged for acknowledged alerts', () => {
-      const entity: HassEntity = {
-        entity_id: 'test',
-        state: 'on',
-        attributes: { cleared: false, acknowledged: true, escalated: false },
-        last_changed: '',
-        last_updated: '',
-        context: { id: '', parent_id: null, user_id: null },
-      };
-
-      expect(getAlertStatus(entity)).toBe('acknowledged');
+      expect(getAlertStatus(entity)).toBe('resolved');
     });
 
     test('returns escalated for escalated alerts', () => {
       const entity: HassEntity = {
         entity_id: 'test',
         state: 'on',
-        attributes: { cleared: false, acknowledged: false, escalated: true },
+        attributes: { resolved: false, snoozed: false, acknowledged: false, escalated: true },
         last_changed: '',
         last_updated: '',
         context: { id: '', parent_id: null, user_id: null },
@@ -52,11 +39,37 @@ describe('entity-discovery', () => {
       expect(getAlertStatus(entity)).toBe('escalated');
     });
 
+    test('returns snoozed for snoozed alerts', () => {
+      const entity: HassEntity = {
+        entity_id: 'test',
+        state: 'on',
+        attributes: { resolved: false, snoozed: true, acknowledged: false, escalated: false },
+        last_changed: '',
+        last_updated: '',
+        context: { id: '', parent_id: null, user_id: null },
+      };
+
+      expect(getAlertStatus(entity)).toBe('snoozed');
+    });
+
+    test('returns acknowledged for acknowledged alerts', () => {
+      const entity: HassEntity = {
+        entity_id: 'test',
+        state: 'on',
+        attributes: { resolved: false, snoozed: false, acknowledged: true, escalated: false },
+        last_changed: '',
+        last_updated: '',
+        context: { id: '', parent_id: null, user_id: null },
+      };
+
+      expect(getAlertStatus(entity)).toBe('acknowledged');
+    });
+
     test('returns active for active alerts', () => {
       const entity: HassEntity = {
         entity_id: 'test',
         state: 'on',
-        attributes: { cleared: false, acknowledged: false, escalated: false },
+        attributes: { resolved: false, snoozed: false, acknowledged: false, escalated: false },
         last_changed: '',
         last_updated: '',
         context: { id: '', parent_id: null, user_id: null },
@@ -69,7 +82,7 @@ describe('entity-discovery', () => {
       const entity: HassEntity = {
         entity_id: 'test',
         state: 'off',
-        attributes: { cleared: false, acknowledged: false, escalated: false },
+        attributes: { resolved: false, snoozed: false, acknowledged: false, escalated: false },
         last_changed: '',
         last_updated: '',
         context: { id: '', parent_id: null, user_id: null },
@@ -144,7 +157,8 @@ describe('entity-discovery', () => {
           group: 'security',
           acknowledged: false,
           escalated: false,
-          cleared: false,
+          snoozed: false,
+          resolved: false,
           first_triggered: '2024-01-01T10:00:00Z',
         },
         last_changed: '',
@@ -162,7 +176,8 @@ describe('entity-discovery', () => {
         group: 'security',
         acknowledged: false,
         escalated: false,
-        cleared: false,
+        snoozed: false,
+        resolved: false,
         first_triggered: '2024-01-01T10:00:00Z',
         status: 'active',
       });

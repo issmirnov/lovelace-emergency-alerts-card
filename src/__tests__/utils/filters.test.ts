@@ -15,7 +15,8 @@ describe('filters', () => {
       group: 'security',
       acknowledged: false,
       escalated: false,
-      cleared: false,
+      snoozed: false,
+      resolved: false,
       status: 'active',
     };
 
@@ -23,9 +24,10 @@ describe('filters', () => {
       type: 'custom:emergency-alerts-card',
       severity_filter: ['critical', 'warning', 'info'],
       group_filter: [],
-      status_filter: ['active', 'acknowledged', 'escalated'],
+      status_filter: ['active', 'acknowledged', 'escalated', 'snoozed'],
       show_acknowledged: true,
-      show_cleared: false,
+      show_snoozed: true,
+      show_resolved: false,
       show_escalated: true,
     };
 
@@ -63,12 +65,21 @@ describe('filters', () => {
       expect(shouldShowAlert(acknowledgedAlert, config)).toBe(false);
     });
 
-    test('filters cleared alerts when show_cleared is false', () => {
-      const clearedAlert = { ...baseAlert, cleared: true };
-      expect(shouldShowAlert(clearedAlert, baseConfig)).toBe(false);
+    test('filters snoozed alerts when show_snoozed is false', () => {
+      const snoozedAlert = { ...baseAlert, snoozed: true };
+      const config = { ...baseConfig, show_snoozed: false };
+      expect(shouldShowAlert(snoozedAlert, config)).toBe(false);
 
-      const config = { ...baseConfig, show_cleared: true };
-      expect(shouldShowAlert(clearedAlert, config)).toBe(true);
+      const config2 = { ...baseConfig, show_snoozed: true };
+      expect(shouldShowAlert(snoozedAlert, config2)).toBe(true);
+    });
+
+    test('filters resolved alerts when show_resolved is false', () => {
+      const resolvedAlert = { ...baseAlert, resolved: true };
+      expect(shouldShowAlert(resolvedAlert, baseConfig)).toBe(false);
+
+      const config = { ...baseConfig, show_resolved: true };
+      expect(shouldShowAlert(resolvedAlert, config)).toBe(true);
     });
 
     test('filters escalated alerts when show_escalated is false', () => {

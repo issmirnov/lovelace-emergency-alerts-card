@@ -78,3 +78,20 @@ export function getGroupTitle(group: string, groupBy: string): string {
   }
   return capitalize(group);
 }
+
+/**
+ * Formats snooze_until timestamp into a static display (v2.0)
+ * @param snooze_until ISO 8601 timestamp when snooze expires
+ * @returns Formatted string like "until 2:30 PM" or empty if not snoozed
+ */
+export function formatSnoozeTime(snooze_until?: string): string {
+  if (!snooze_until) return '';
+
+  const snoozeDate = new Date(snooze_until);
+  const timeStr = snoozeDate.toLocaleTimeString([], {
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+
+  return `until ${timeStr}`;
+}

@@ -47,7 +47,7 @@ export interface HomeAssistant {
 }
 
 /**
- * Configuration for the Emergency Alerts Card
+ * Configuration for the Emergency Alerts Card (v2.0)
  */
 export interface CardConfig {
   type: string;
@@ -56,7 +56,8 @@ export interface CardConfig {
 
   // Display options
   show_acknowledged?: boolean;
-  show_cleared?: boolean;
+  show_snoozed?: boolean; // NEW in v2.0
+  show_resolved?: boolean; // RENAMED from show_cleared
   show_escalated?: boolean;
   group_by?: 'severity' | 'group' | 'status' | 'none';
   sort_by?: 'first_triggered' | 'severity' | 'name' | 'group';
@@ -71,12 +72,13 @@ export interface CardConfig {
   show_timestamps?: boolean;
   show_group_labels?: boolean;
   show_severity_icons?: boolean;
+  show_status_badge?: boolean; // NEW in v2.0
   max_alerts_per_group?: number;
 
-  // Action options
+  // Action options (v2.0 - switch-based)
   show_acknowledge_button?: boolean;
-  show_clear_button?: boolean;
-  show_escalate_button?: boolean;
+  show_snooze_button?: boolean; // NEW in v2.0
+  show_resolve_button?: boolean; // RENAMED from show_clear_button
   button_style?: 'compact' | 'full' | 'icons_only';
 
   // Advanced
@@ -95,12 +97,18 @@ export type Severity = 'critical' | 'warning' | 'info';
 export type AlertGroup = 'security' | 'safety' | 'environmental' | 'maintenance' | 'other';
 
 /**
- * Alert status states
+ * Alert status states (v2.0 switch-based)
  */
-export type AlertStatus = 'active' | 'acknowledged' | 'escalated' | 'cleared' | 'inactive';
+export type AlertStatus =
+  | 'active'
+  | 'acknowledged'
+  | 'escalated'
+  | 'snoozed'
+  | 'resolved'
+  | 'inactive';
 
 /**
- * Normalized alert object with all relevant data
+ * Normalized alert object with all relevant data (v2.0)
  */
 export interface Alert {
   entity_id: string;
@@ -110,14 +118,16 @@ export interface Alert {
   group: AlertGroup;
   acknowledged: boolean;
   escalated: boolean;
-  cleared: boolean;
+  snoozed: boolean; // NEW in v2.0
+  resolved: boolean; // RENAMED from cleared
   first_triggered?: string;
   last_cleared?: string;
+  snooze_until?: string; // NEW in v2.0 - ISO timestamp
   status: AlertStatus;
 }
 
 /**
- * Emergency alert entity attributes from the integration
+ * Emergency alert entity attributes from the integration (v2.0)
  */
 export interface EmergencyAlertAttributes extends Record<string, unknown> {
   friendly_name: string;
@@ -125,9 +135,11 @@ export interface EmergencyAlertAttributes extends Record<string, unknown> {
   group: AlertGroup;
   acknowledged: boolean;
   escalated: boolean;
-  cleared: boolean;
+  snoozed: boolean; // NEW in v2.0
+  resolved: boolean; // RENAMED from cleared
   first_triggered?: string;
   last_cleared?: string;
+  snooze_until?: string; // NEW in v2.0 - ISO timestamp when snooze expires
 }
 
 /**

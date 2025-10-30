@@ -54,7 +54,7 @@ export function groupAlertsByGroup(alerts: Alert[]): GroupedAlerts {
 }
 
 /**
- * Groups alerts by their status (active, acknowledged, escalated, cleared)
+ * Groups alerts by their status (v2.0: active, acknowledged, snoozed, escalated, resolved)
  * Creates predefined groups for all status types
  * @param alerts Array of alerts to group
  * @returns Grouped alerts by status
@@ -63,8 +63,9 @@ export function groupAlertsByStatus(alerts: Alert[]): GroupedAlerts {
   const grouped: GroupedAlerts = {
     active: [],
     acknowledged: [],
+    snoozed: [], // NEW in v2.0
     escalated: [],
-    cleared: [],
+    resolved: [], // RENAMED from cleared
   };
 
   for (const alert of alerts) {

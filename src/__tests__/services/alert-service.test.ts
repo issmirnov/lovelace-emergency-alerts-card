@@ -23,11 +23,11 @@ describe('AlertService', () => {
   });
 
   describe('acknowledge', () => {
-    test('calls Home Assistant acknowledge service', async () => {
-      await alertService.acknowledge('binary_sensor.test');
+    test('calls switch toggle service for acknowledged switch', async () => {
+      await alertService.acknowledge('binary_sensor.emergency_test');
 
-      expect(mockHass.callService).toHaveBeenCalledWith('emergency_alerts', 'acknowledge', {
-        entity_id: 'binary_sensor.test',
+      expect(mockHass.callService).toHaveBeenCalledWith('switch', 'toggle', {
+        entity_id: 'switch.emergency_test_acknowledged',
       });
     });
 
@@ -35,11 +35,11 @@ describe('AlertService', () => {
       const error = new Error('Service call failed');
       mockHass.callService.mockRejectedValueOnce(error);
 
-      await expect(alertService.acknowledge('binary_sensor.test')).rejects.toThrow();
+      await expect(alertService.acknowledge('binary_sensor.emergency_test')).rejects.toThrow();
 
       expect(onErrorMock).toHaveBeenCalledWith({
         message: 'Failed to acknowledge alert',
-        entity_id: 'binary_sensor.test',
+        entity_id: 'binary_sensor.emergency_test',
         error,
       });
     });
@@ -50,7 +50,7 @@ describe('AlertService', () => {
       mockHass.callService.mockRejectedValueOnce(error);
 
       try {
-        await alertService.acknowledge('binary_sensor.test');
+        await alertService.acknowledge('binary_sensor.emergency_test');
       } catch {
         // Expected
       }
@@ -59,18 +59,26 @@ describe('AlertService', () => {
         '[Emergency Alerts Card] Failed to acknowledge alert:',
         error
       );
-      expect(consoleSpy).toHaveBeenCalledWith('Entity: binary_sensor.test');
+      expect(consoleSpy).toHaveBeenCalledWith('Entity: binary_sensor.emergency_test');
 
       consoleSpy.mockRestore();
     });
+
+    test('handles non-emergency prefixed entity IDs correctly', async () => {
+      await alertService.acknowledge('binary_sensor.custom_alert');
+
+      expect(mockHass.callService).toHaveBeenCalledWith('switch', 'toggle', {
+        entity_id: 'switch.custom_alert_acknowledged',
+      });
+    });
   });
 
-  describe('clear', () => {
-    test('calls Home Assistant clear service', async () => {
-      await alertService.clear('binary_sensor.test');
+  describe('resolve', () => {
+    test('calls switch toggle service for resolved switch', async () => {
+      await alertService.resolve('binary_sensor.emergency_test');
 
-      expect(mockHass.callService).toHaveBeenCalledWith('emergency_alerts', 'clear', {
-        entity_id: 'binary_sensor.test',
+      expect(mockHass.callService).toHaveBeenCalledWith('switch', 'toggle', {
+        entity_id: 'switch.emergency_test_resolved',
       });
     });
 
@@ -78,22 +86,30 @@ describe('AlertService', () => {
       const error = new Error('Service call failed');
       mockHass.callService.mockRejectedValueOnce(error);
 
-      await expect(alertService.clear('binary_sensor.test')).rejects.toThrow();
+      await expect(alertService.resolve('binary_sensor.emergency_test')).rejects.toThrow();
 
       expect(onErrorMock).toHaveBeenCalledWith({
-        message: 'Failed to clear alert',
-        entity_id: 'binary_sensor.test',
+        message: 'Failed to resolve alert',
+        entity_id: 'binary_sensor.emergency_test',
         error,
+      });
+    });
+
+    test('handles non-emergency prefixed entity IDs correctly', async () => {
+      await alertService.resolve('binary_sensor.custom_alert');
+
+      expect(mockHass.callService).toHaveBeenCalledWith('switch', 'toggle', {
+        entity_id: 'switch.custom_alert_resolved',
       });
     });
   });
 
-  describe('escalate', () => {
-    test('calls Home Assistant escalate service', async () => {
-      await alertService.escalate('binary_sensor.test');
+  describe('snooze', () => {
+    test('calls switch turn_on service for snoozed switch', async () => {
+      await alertService.snooze('binary_sensor.emergency_test');
 
-      expect(mockHass.callService).toHaveBeenCalledWith('emergency_alerts', 'escalate', {
-        entity_id: 'binary_sensor.test',
+      expect(mockHass.callService).toHaveBeenCalledWith('switch', 'turn_on', {
+        entity_id: 'switch.emergency_test_snoozed',
       });
     });
 
@@ -101,35 +117,20 @@ describe('AlertService', () => {
       const error = new Error('Service call failed');
       mockHass.callService.mockRejectedValueOnce(error);
 
-      await expect(alertService.escalate('binary_sensor.test')).rejects.toThrow();
+      await expect(alertService.snooze('binary_sensor.emergency_test')).rejects.toThrow();
 
       expect(onErrorMock).toHaveBeenCalledWith({
-        message: 'Failed to escalate alert',
-        entity_id: 'binary_sensor.test',
+        message: 'Failed to snooze alert',
+        entity_id: 'binary_sensor.emergency_test',
         error,
       });
     });
-  });
 
-  describe('deEscalate', () => {
-    test('calls Home Assistant acknowledge service for de-escalation', async () => {
-      await alertService.deEscalate('binary_sensor.test');
+    test('handles non-emergency prefixed entity IDs correctly', async () => {
+      await alertService.snooze('binary_sensor.custom_alert');
 
-      expect(mockHass.callService).toHaveBeenCalledWith('emergency_alerts', 'acknowledge', {
-        entity_id: 'binary_sensor.test',
-      });
-    });
-
-    test('handles errors and notifies callback', async () => {
-      const error = new Error('Service call failed');
-      mockHass.callService.mockRejectedValueOnce(error);
-
-      await expect(alertService.deEscalate('binary_sensor.test')).rejects.toThrow();
-
-      expect(onErrorMock).toHaveBeenCalledWith({
-        message: 'Failed to de-escalate alert',
-        entity_id: 'binary_sensor.test',
-        error,
+      expect(mockHass.callService).toHaveBeenCalledWith('switch', 'turn_on', {
+        entity_id: 'switch.custom_alert_snoozed',
       });
     });
   });

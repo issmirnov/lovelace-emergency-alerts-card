@@ -11,38 +11,48 @@ A custom Lovelace card for displaying emergency alerts from the Emergency Alerts
 ## Features
 
 - **Real-time Alert Display**: Shows active emergency alerts with severity indicators
-- **Alert Grouping**: Groups alerts by severity (critical, warning, info)
-- **Multiple Actions**: Acknowledge, Clear, and Escalate alerts with one-click buttons
-- **Smart Button Logic**: Shows appropriate actions based on alert state
-- **Time Tracking**: Shows when alerts were first triggered
-- **Responsive Design**: Adapts to different screen sizes
-- **Home Assistant Integration**: Seamlessly integrates with the Emergency Alerts integration
+- **Alert Grouping**: Groups alerts by severity, status, group, or none
+- **Switch-Based Actions** (v2.0): Toggle switches for Acknowledge, Snooze (5min), and Resolve
+- **Visual State Indicators**: Animated status badges, color-coded borders, and pulsing effects
+- **Smart State Management**: Backend enforces mutual exclusivity - only one response state active at a time
+- **Automatic Escalation**: Alerts auto-escalate after 5 minutes if not acknowledged
+- **Time Tracking**: Shows when alerts were first triggered and snooze expiration times
+- **Responsive Design**: Adapts to different screen sizes with mobile-optimized layouts
+- **Home Assistant Integration**: Seamlessly integrates with the Emergency Alerts integration v2.0+
 
-## Alert Action Buttons Explained
+## v2.0 Alert Action Switches Explained
 
-The Emergency Alerts Card provides three main action buttons for each alert, each with a specific purpose and smart display logic:
+**BREAKING CHANGE**: v2.0 introduces a switch-based architecture replacing the old button-based system.
 
-| Button      | When It Appears                                 | What It Does                                                      |
-|-------------|-------------------------------------------------|-------------------------------------------------------------------|
-| **ACK**     | Alert is active, not acknowledged, not escalated | Marks the alert as acknowledged (user has seen/handled the alert) |
-| **ESC**     | Alert is active, not escalated                  | Escalates the alert (triggers escalation actions, e.g. urgent notification) |
-| **DE-ESC**  | Alert is currently escalated                    | De-escalates the alert (returns to acknowledged state)            |
-| **CLR**     | Alert is active or acknowledged (not cleared)   | Manually clears the alert (resets state, triggers clear actions)  |
+The Emergency Alerts Card now provides **three toggle switches** for each alert, with mutual exclusivity enforced by the backend:
 
-**Button Logic:**
-- Only the relevant buttons for the alert's current state are shown.
-- "De-escalate" only appears if the alert is actually escalated.
-- "Acknowledge" and "Escalate" are hidden if the alert is escalated or cleared.
-- "Clear" is always available unless the alert is already cleared.
+| Switch         | What It Does | Behavior | Visual State |
+|----------------|--------------|----------|--------------|
+| **Acknowledge** | Mark as "working on it" - prevents auto-escalation | Toggle ON/OFF | Green glow when active |
+| **Snooze (5m)** | Silence for 5 minutes - auto-expires | Turns ON (auto-turns OFF after 5min) | Orange glow with pulse animation |
+| **Resolve**    | Mark as fixed - won't re-trigger until condition fully clears | Toggle ON/OFF | Blue glow when active |
+
+**Key v2.0 Behaviors:**
+
+- **Mutual Exclusivity**: Only ONE switch can be ON at a time. Turning one ON automatically turns others OFF.
+- **Auto-Escalation**: If an active alert isn't acknowledged within 5 minutes, it automatically escalates (pulsing red animation).
+- **Snooze Auto-Expiry**: Snooze automatically expires after 5 minutes, returning alert to previous state.
+- **Tooltips**: Hover over switches to see detailed explanations of their behavior.
+- **Visual Feedback**: Active switches show colored glows, status badges, and animations.
 
 **Example Scenario:**
-1. **Alert triggers** (e.g., "Water Leak Detected"): You see **ACK**, **ESC**, and **CLR**.
-2. You click **ACK**: The alert is marked as acknowledged. **ESC** and **CLR** remain.
-3. If you click **ESC**: The alert is escalated (urgent actions run). **DE-ESC** and **CLR** now appear.
-4. If you click **DE-ESC**: The alert returns to acknowledged state.
-5. If you click **CLR** at any point: The alert is cleared and all action buttons disappear.
+1. **Alert triggers** (e.g., "Water Leak Detected"): All switches OFF, alert shows as "ACTIVE" badge.
+2. You toggle **Acknowledge** ON: Alert badge changes to "ACKNOWLEDGED" (green), alert won't auto-escalate.
+3. You toggle **Snooze** ON: Acknowledge automatically turns OFF, "SNOOZED" badge appears (orange with pulse), shows "until 2:35 PM".
+4. After 5 minutes: Snooze expires, returns to acknowledged state (or active if it wasn't acknowledged before).
+5. You toggle **Resolve** ON: All other switches turn OFF, "RESOLVED" badge appears (blue), alert fades to 50% opacity.
+6. Condition re-occurs: If physical condition re-triggers while resolved, alert won't re-activate until resolve is turned OFF.
 
-This logic ensures you always see the right actions for the alert's current state, reducing confusion and making emergency management fast and intuitive.
+**Escalation (Automatic Only in v2.0):**
+- Escalation is **automatic** - no manual escalate button.
+- Alerts escalate after 5 minutes if not acknowledged.
+- Escalated alerts show pulsing red "ESCALATED" badge and wider border.
+- Acknowledging an escalated alert returns it to acknowledged state (de-escalates automatically).
 
 ## Prerequisites
 
@@ -109,21 +119,23 @@ The Emergency Alerts Card supports extensive configuration options to customize 
 #### Display Options
 ```yaml
 type: custom:emergency-alerts-card
-# Show/hide different alert types
+# Show/hide different alert types (v2.0)
 show_acknowledged: true          # Show acknowledged alerts
-show_cleared: false              # Show cleared alerts  
-show_escalated: true             # Show escalated alerts
+show_snoozed: true              # Show snoozed alerts (NEW in v2.0)
+show_resolved: false            # Show resolved alerts (RENAMED from show_cleared)
+show_escalated: true            # Show escalated alerts
 
 # Grouping and sorting
-group_by: "severity"             # "severity", "group", "status", or "none"
-sort_by: "first_triggered"       # "first_triggered", "severity", "name", "group"
+group_by: "severity"            # "severity", "group", "status", or "none"
+sort_by: "first_triggered"      # "first_triggered", "severity", "name", "group"
 
-# Visual appearance
-compact_mode: false              # More compact display
-show_timestamps: true            # Show "X minutes ago"
-show_group_labels: true          # Show group names
-show_severity_icons: true        # Show severity icons
-max_alerts_per_group: 10         # Limit alerts per group
+# Visual appearance (v2.0)
+compact_mode: false             # More compact display
+show_timestamps: true           # Show "X minutes ago"
+show_group_labels: true         # Show group names
+show_severity_icons: true       # Show severity icons
+show_status_badge: true         # Show status badges (NEW in v2.0)
+max_alerts_per_group: 10        # Limit alerts per group
 ```
 
 #### Filtering Options
@@ -135,20 +147,21 @@ severity_filter: ["critical", "warning", "info"]
 # Filter by alert groups
 group_filter: ["security", "safety", "environment"]
 
-# Filter by alert status
-status_filter: ["active", "acknowledged", "escalated"]
+# Filter by alert status (v2.0 - updated status types)
+status_filter: ["active", "acknowledged", "snoozed", "escalated", "resolved"]
 ```
 
-#### Action Button Options
+#### Action Switch Options (v2.0)
 ```yaml
 type: custom:emergency-alerts-card
-# Show/hide action buttons
-show_acknowledge_button: true    # Show acknowledge button
-show_clear_button: true          # Show clear button  
-show_escalate_button: true       # Show escalate button
+# Show/hide action switches (v2.0 - switch-based, not buttons)
+show_acknowledge_button: true    # Show acknowledge switch
+show_snooze_button: true        # Show snooze switch (NEW in v2.0)
+show_resolve_button: true       # Show resolve switch (RENAMED from show_clear_button)
 
+# Note: show_escalate_button removed in v2.0 - escalation is automatic
 # Button appearance
-button_style: "compact"          # "compact", "full", "icons_only"
+button_style: "compact"         # "compact", "full", "icons_only"
 ```
 
 #### Advanced Options
@@ -165,11 +178,12 @@ refresh_interval: 30
 
 ### Configuration Examples
 
-#### Show Only Active Alerts
+#### Show Only Active Alerts (v2.0)
 ```yaml
 type: custom:emergency-alerts-card
 show_acknowledged: false
-show_cleared: false
+show_snoozed: false
+show_resolved: false
 status_filter: ["active"]
 ```
 
@@ -179,34 +193,40 @@ type: custom:emergency-alerts-card
 compact_mode: true
 button_style: "icons_only"
 show_timestamps: false
+show_status_badge: true
 max_alerts_per_group: 3
 ```
 
-#### Security-Focused Dashboard
+#### Security-Focused Dashboard (v2.0)
 ```yaml
 type: custom:emergency-alerts-card
 group_filter: ["security"]
 severity_filter: ["critical", "warning"]
-show_escalate_button: true
-show_acknowledge_button: false
+show_status_badge: true
+show_snooze_button: true
+show_acknowledge_button: true
 ```
 
-#### Group by Alert Type
+#### Group by Alert Status (v2.0)
 ```yaml
 type: custom:emergency-alerts-card
-group_by: "group"
+group_by: "status"
 show_group_labels: true
+show_acknowledged: true
+show_snoozed: true
+show_resolved: true
 ```
 
 #### Critical Alerts Only
 ```yaml
 type: custom:emergency-alerts-card
 severity_filter: ["critical"]
-show_acknowledge_button: false
-show_escalate_button: false
+show_acknowledge_button: true
+show_snooze_button: false
+show_status_badge: true
 ```
 
-### Complete Dashboard Example
+### Complete Dashboard Example (v2.0)
 
 Here's a complete Lovelace dashboard configuration showing different card variations:
 
@@ -218,29 +238,35 @@ resources:
 views:
   - title: Emergency Dashboard
     cards:
-      # Basic emergency alerts card
+      # Basic emergency alerts card with v2.0 features
       - type: custom:emergency-alerts-card
         summary_entity: sensor.emergency_summary
-      
+        show_status_badge: true
+
       # Compact view for mobile
       - type: custom:emergency-alerts-card
         compact_mode: true
         show_timestamps: false
+        show_status_badge: true
         button_style: "icons_only"
         max_alerts_per_group: 5
-      
-      # Grouped by status
+
+      # Grouped by status (v2.0 - includes snoozed and resolved)
       - type: custom:emergency-alerts-card
         group_by: "status"
         show_acknowledged: true
-        show_cleared: true
+        show_snoozed: true
+        show_resolved: true
+        show_status_badge: true
         title: "Alert Status Overview"
-      
-      # Security-focused view
+
+      # Security-focused view with snooze enabled
       - type: custom:emergency-alerts-card
         group_by: "group"
         group_filter: ["security"]
         severity_filter: ["critical", "warning"]
+        show_snooze_button: true
+        show_status_badge: true
         title: "Security Alerts"
 ```
 
@@ -259,25 +285,27 @@ binary_sensor.emergency_door_open
 binary_sensor.emergency_water_leak
 ```
 
-### Required Attributes
+### Required Attributes (v2.0)
 ```yaml
 # State
-state: 'on' (alert active) or 'off' (alert cleared)
+state: 'on' (alert active) or 'off' (alert inactive)
 
 # Required attributes
 friendly_name: "Emergency: Fire Alarm Triggered"
 severity: "critical" | "warning" | "info"
 group: "security" | "safety" | "environmental" | "maintenance"
 
-# Status tracking
+# Status tracking (v2.0 - updated)
 acknowledged: boolean
-escalated: boolean
-cleared: boolean
-first_triggered: "2024-12-19T10:30:00Z"  # ISO datetime string
-last_cleared: "2024-12-19T11:00:00Z"     # ISO datetime string (optional)
+escalated: boolean        # Auto-set by backend after 5 minutes
+snoozed: boolean         # NEW in v2.0
+resolved: boolean        # RENAMED from "cleared"
+first_triggered: "2024-12-19T10:30:00Z"     # ISO datetime string
+snooze_until: "2024-12-19T10:35:00Z"        # NEW in v2.0 - ISO datetime (optional)
+last_resolved: "2024-12-19T11:00:00Z"       # RENAMED from last_cleared (optional)
 ```
 
-### Example Entity
+### Example Entity (v2.0)
 ```yaml
 binary_sensor.emergency_fire_alarm:
   state: 'on'
@@ -286,41 +314,50 @@ binary_sensor.emergency_fire_alarm:
   group: "safety"
   acknowledged: false
   escalated: false
-  cleared: false
+  snoozed: false
+  resolved: false
   first_triggered: "2024-12-19T10:30:00Z"
 ```
 
-## Available Services
+## Available Services (v2.0)
 
-The Emergency Alerts Card calls these services when action buttons are clicked:
+**BREAKING CHANGE**: v2.0 uses **switch entities** instead of service calls.
 
-### Acknowledge Alert
+The Emergency Alerts Card toggles switch entities when action buttons are clicked. For each alert binary sensor, the backend creates three switch entities:
+
+### Switch Entity Pattern
 ```yaml
-service: emergency_alerts.acknowledge
-data:
-  entity_id: binary_sensor.emergency_fire_alarm
+# For binary_sensor: binary_sensor.emergency_fire_alarm
+# The backend creates these switches:
+
+switch.emergency_fire_alarm_acknowledged   # Acknowledge switch
+switch.emergency_fire_alarm_snoozed       # Snooze switch
+switch.emergency_fire_alarm_resolved      # Resolve switch
 ```
 
-### Escalate Alert
+### Acknowledge Alert (v2.0)
 ```yaml
-service: emergency_alerts.escalate
+service: switch.toggle
 data:
-  entity_id: binary_sensor.emergency_fire_alarm
+  entity_id: switch.emergency_fire_alarm_acknowledged
 ```
 
-### Clear Alert
+### Snooze Alert (v2.0 - NEW)
 ```yaml
-service: emergency_alerts.clear
+service: switch.turn_on
 data:
-  entity_id: binary_sensor.emergency_fire_alarm
+  entity_id: switch.emergency_fire_alarm_snoozed
 ```
 
-### De-escalate Alert
+### Resolve Alert (v2.0 - RENAMED from clear)
 ```yaml
-service: emergency_alerts.de_escalate
+service: switch.toggle
 data:
-  entity_id: binary_sensor.emergency_fire_alarm
+  entity_id: switch.emergency_fire_alarm_resolved
 ```
+
+### Note on Escalation
+Escalation in v2.0 is **automatic** (5-minute timer) and has no manual service call. To de-escalate, simply acknowledge the alert, which automatically turns off escalation.
 
 ## Screenshots
 
