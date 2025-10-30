@@ -5,9 +5,46 @@
 > **Update Frequency**: Very frequently - after every significant change
 
 ## Current Focus
-**Project in maintenance mode after successful v1.1 comprehensive refactoring.** Memory Bank system fully updated with new modular architecture, patterns, and lessons learned from October 2025 refactoring session.
+**v2.0.1 released and ready for HACS installation.** Fixed HACS path issue by moving compiled files to repository root following established patterns from popular cards.
 
 ## Recent Changes
+
+### October 30, 2025 - v2.0.1 Release (HACS Path Fix)
+- **Changed**: Moved compiled files from dist/ to repository root
+- **Why**: HACS 404 error - expected files at root, not in dist/
+- **Impact**: HACS installation now works correctly
+- **Key Changes**:
+  - Build output: `dist/emergency-alerts-card.js` → `emergency-alerts-card.js` (root)
+  - Updated `hacs.json`: removed `content_in_root: false`, simplified `filename`
+  - Updated `rollup.config.js`: outputs to root
+  - Updated `.gitignore`: keeps root .js files, ignores dist/
+  - Updated `package.json`: v2.0.1, updated scripts
+  - Updated CI/CD workflows: reference root files
+- **Pattern**: Follows card-mod, button-card, boilerplate-card structure
+- **Files**: 8 files modified, 2 new files in root
+- **Testing**: Release workflow triggered, file accessible at GitHub
+
+### October 30, 2025 - v2.0.0 Release (Switch Architecture)
+- **Changed**: Created first release tag for v2.0 switch-based architecture
+- **Why**: Publish production-ready v2.0 to GitHub for HACS installation
+- **Impact**: v2.0.0 available as GitHub release with artifacts
+- **Key Changes**:
+  - Deleted `www/` directory (old structure with only .d.ts files)
+  - Rebuilt `dist/` to ensure current v2.0 code
+  - Created annotated v2.0.0 tag with comprehensive release notes
+  - Pushed tag to trigger release workflow
+- **Release Notes**: Featured switch architecture, snooze, auto-escalation, breaking changes
+- **Discovered Issue**: HACS couldn't load file (404 error) - led to v2.0.1 fix
+
+### October 30, 2025 - Memory Bank Consolidation
+- **Changed**: Updated memory bank files and consolidated documentation
+- **Why**: Reflect v2.0 as current version, remove outdated historical docs
+- **Impact**: Memory bank accurately reflects production state
+- **Key Changes**:
+  - Updated `projectbrief.md`, `systemPatterns.md`, `techContext.md` for v2.0
+  - Filled in `CLAUDE.md` with actual project intelligence and user preferences
+  - Removed 5 outdated markdown files (HACS_COMPLIANCE.md, etc.)
+  - Documented user preference: simple, current-focused docs (no version drama)
 
 ### October 29, 2025 - Comprehensive Refactoring (v1.1)
 - **Changed**: Complete architectural refactoring of entire codebase
@@ -52,16 +89,16 @@
 ## Active Decisions
 
 ### Decision in Progress: None currently
-No active decisions requiring input at this time. Core functionality is stable and feature-complete for v1.1 (post-refactoring). Project in maintenance mode.
+No active decisions requiring input at this time. v2.0.1 released and ready for user testing in HACS.
 
 ## Next Steps
 ### Immediate (Current Session)
-- [x] Complete comprehensive refactoring
-- [x] Create REFACTORING_SUMMARY.md
-- [x] Create Memory Bank structure
-- [x] Populate all memory bank files
-- [x] Update memory bank with refactoring changes
-- [ ] Commit all changes to git (pending user decision)
+- [x] Complete v2.0.0 release
+- [x] Delete www/ directory
+- [x] Fix HACS installation path issue
+- [x] Move compiled files to root
+- [x] Release v2.0.1
+- [x] Update memory bank with all changes
 
 ### Short Term (Next Few Sessions)
 - [ ] Consider component integration tests (utils/services already well-tested)
@@ -108,13 +145,13 @@ _No major challenges at this time. Comprehensive refactoring addressed most tech
 - **Alert grouping flexibility** - Solution: Strategy pattern with multiple grouping options
 
 ## Context Notes
-- This is a stable, feature-complete project at v1.1 (post-refactoring)
-- **Major milestone**: Comprehensive refactoring completed October 2025
-- Primary focus is now maintenance and responding to user feedback
-- Memory Bank fully populated and updated with current architecture
-- Project branch is `memory-bank`, main branch is `main`
-- Untracked files in git: memory bank files pending commit
-- TypeScript declaration files now properly gitignored
-- Project uses AI assistance heavily (Claude/Cursor) - modular architecture makes this more effective
-- Companion project: Emergency Alerts integration (separate repository)
-- See REFACTORING_SUMMARY.md for complete refactoring details
+- **Current version**: v2.0.1 released and live
+- **Major milestones**: v2.0 switch architecture (Dec 2024), v1.1 refactoring (Oct 2025), v2.0.1 HACS fix (Oct 2025)
+- Ready for HACS custom repository installation
+- Compiled file at repository root: `emergency-alerts-card.js` (49KB)
+- Follows standard HACS pattern (card-mod, button-card style)
+- All changes committed to main branch
+- GitHub Actions release workflow running for v2.0.1
+- Memory Bank fully updated with v2.0 architecture and release process
+- Project uses AI assistance heavily (Claude/Cursor) - modular architecture makes this effective
+- Companion project: Emergency Alerts integration (separate repository, also v2.0)

@@ -262,6 +262,25 @@ export function shouldShowAlert(alert: Alert, config: CardConfig): boolean {
 
 ## Key Technical Decisions
 
+### Decision: HACS File Location at Root (v2.0.1)
+- **Context**: HACS couldn't load card - 404 error on `/hacsfiles/.../emergency-alerts-card.js`
+- **Options Considered**:
+  - Keep `dist/` structure with complex `hacs.json` configuration
+  - Move compiled file to repository root (standard pattern)
+- **Decision**: Move compiled file to repository root
+- **Rationale**:
+  - Follows established pattern from popular cards (card-mod, button-card, boilerplate-card)
+  - Simpler `hacs.json` (just filename, no path complexity)
+  - HACS expects files at root or in standard locations
+  - Easier to understand and maintain
+- **Consequences**:
+  - Compiled file committed to root: `emergency-alerts-card.js` (49KB)
+  - Build outputs to root instead of dist/
+  - `.gitignore` keeps root .js files (exception to build output rule)
+  - CI/CD workflows updated to reference root
+- **Result**: HACS installation works correctly, follows community standards
+- **Date**: October 30, 2025 (v2.0.1 Release)
+
 ### Decision: Switch-Based Architecture (v2.0)
 - **Context**: Original button-based design used service calls directly. Needed better state management and mutual exclusivity.
 - **Options Considered**:
@@ -369,15 +388,17 @@ export function shouldShowAlert(alert: Alert, config: CardConfig): boolean {
 
 ## Code Organization
 
-### Directory Structure (After Refactoring)
+### Directory Structure (Current v2.0.1)
 ```
 lovelace-emergency-alerts-card/
+├── emergency-alerts-card.js          # HACS distribution file (49KB, at root)
+├── emergency-alerts-card.js.map      # Sourcemap (122KB, at root)
 ├── src/                              # TypeScript source (modular)
 │   ├── emergency-alerts-card.ts      # Main component (645 lines)
 │   ├── types.ts                      # TypeScript interfaces (155 lines)
 │   ├── styles.ts                     # CSS-in-JS styles (271 lines)
 │   ├── services/                     # Service layer
-│   │   └── alert-service.ts          # Error handling service (132 lines)
+│   │   └── alert-service.ts          # Switch control service (132 lines)
 │   ├── utils/                        # Pure utility functions
 │   │   ├── formatters.ts             # Time/icon/color formatting
 │   │   ├── filters.ts                # Alert filtering logic
@@ -394,25 +415,23 @@ lovelace-emergency-alerts-card/
 │       │   └── entity-discovery.test.ts # 12 tests, 100% coverage
 │       └── services/
 │           └── alert-service.test.ts # 11 tests, 100% coverage
-├── dist/                             # Build output (Rollup)
-│   ├── emergency-alerts-card.js      # Bundled JavaScript
-│   └── emergency-alerts-card.js.map  # Sourcemap (for debugging)
-├── www/                              # HACS distribution folder
-│   └── dist/                         # Copy of dist/ for HACS
+├── dist/                             # TypeScript declarations (gitignored)
 ├── coverage/                         # Jest coverage reports
 ├── .github/workflows/                # CI/CD (GitHub Actions)
-│   └── ci.yml                        # Enhanced with sourcemap validation
+│   ├── ci.yml                        # Build validation + tests
+│   ├── release.yml                   # Release workflow (tags)
+│   └── hacs.yml                      # HACS validation
 ├── .husky/                           # Git hooks
 │   └── pre-commit                    # Lint and format on commit
-├── rollup.config.js                  # Build configuration (sourcemaps enabled)
+├── rollup.config.js                  # Build configuration (outputs to root)
 ├── tsconfig.json                     # TypeScript config
 ├── jest.config.js                    # Test config
-├── package.json                      # NPM dependencies + lint-staged
+├── package.json                      # NPM dependencies + lint-staged (v2.0.1)
 ├── README.md                         # Documentation
-├── hacs.json                         # HACS metadata
-├── REFACTORING_SUMMARY.md            # Comprehensive refactoring documentation
+├── hacs.json                         # HACS metadata (filename at root)
 └── .claude/                          # Memory bank
-    └── memory-bank/                  # Context files
+    ├── memory-bank/                  # Context files (v2.0 updated)
+    └── commands/                     # Slash commands
 ```
 
 ### Module Responsibilities (After Refactoring)
@@ -477,6 +496,14 @@ lovelace-emergency-alerts-card/
 - **Grouping methods**: `_groupAlertsBy*` pattern
 - **CSS classes**: Kebab-case (e.g., `alert-item`, `action-btn`)
 - **Config properties**: Snake_case (e.g., `show_acknowledged`, `group_by`)
+
+### HACS Deployment (v2.0.1)
+- **File location**: Compiled file at repository root (`emergency-alerts-card.js`)
+- **hacs.json**: Simple filename only, no path (`"filename": "emergency-alerts-card.js"`)
+- **Build output**: Rollup outputs directly to root
+- **Gitignore**: Exception to keep root `.js` and `.js.map` files
+- **Pattern**: Follows card-mod, button-card, boilerplate-card structure
+- **URL**: HACS loads from `/hacsfiles/lovelace-emergency-alerts-card/emergency-alerts-card.js`
 
 ### Error Handling (IMPROVED October 2025)
 - **AlertService** class provides comprehensive error handling

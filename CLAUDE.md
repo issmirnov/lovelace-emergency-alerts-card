@@ -102,12 +102,22 @@ This section grows as patterns and preferences are discovered during work on thi
 - JSDoc comments critical for AI to maintain context across sessions
 
 **HACS Compliance**
-- Build output must go to `www/dist/` directory
+- Compiled file should be at repository root (not in dist/)
+- Simple hacs.json: just `"filename": "card-name.js"` (no path)
+- Follow established patterns (card-mod, button-card, boilerplate-card)
+- HACS loads from `/hacsfiles/repo-name/card-name.js`
 - Sourcemaps are helpful for debugging
 - GitHub Actions validation saves time vs manual checks
 - Repository topics matter for discoverability
 
 ### Known Gotchas
+
+**HACS File Path (FIXED in v2.0.1)**
+- HACS expects compiled file at repository root, not in dist/
+- `hacs.json` should have just filename: `"filename": "card-name.js"` (NO path)
+- Don't use `"content_in_root": false` with file in dist/ - causes 404 errors
+- Pattern: Research popular cards (card-mod, button-card) for examples
+- If getting 404 on `/hacsfiles/...`, check file location and hacs.json
 
 **Entity ID Conversion**
 - AlertService must convert `binary_sensor.emergency_foo` to `switch.emergency_foo_acknowledged`

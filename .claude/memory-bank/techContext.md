@@ -200,7 +200,17 @@ npm run validate:hacs
 
 ## Version History
 
-### v2.0.0 (December 2024) - Switch-Based Architecture
+### v2.0.1 (October 30, 2025) - HACS Installation Fix
+**Bug fix release**
+- **HACS path fix**: Moved compiled files to repository root (dist/ → root)
+- **Simplified hacs.json**: Removed `content_in_root: false`, just `filename: "emergency-alerts-card.js"`
+- **Updated build**: rollup.config.js outputs to root directory
+- **CI/CD updates**: Workflows reference root files
+- **Pattern**: Follows card-mod, button-card, boilerplate-card structure
+- **Fix**: Resolves 404 error `/hacsfiles/.../emergency-alerts-card.js`
+- **Impact**: HACS installation now works correctly
+
+### v2.0.0 (October 30, 2025) - Switch-Based Architecture
 **Major rewrite with breaking changes**
 - **Switch-based architecture**: Control via switch entities instead of service calls
 - **Snooze functionality**: 5-minute auto-expiring silence feature

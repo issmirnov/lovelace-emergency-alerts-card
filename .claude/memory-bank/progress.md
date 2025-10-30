@@ -4,9 +4,9 @@
 > **Purpose**: What works, what's left, current status
 
 ## Status Overview
-**Current Phase**: Production (v1.1 - Post-Refactoring)
-**Overall Progress**: 98% complete (comprehensive refactoring done, maintenance mode)
-**Last Updated**: October 29, 2025
+**Current Phase**: Production (v2.0.1 - Live Release)
+**Overall Progress**: 100% complete (v2.0 released, HACS installation working)
+**Last Updated**: October 30, 2025
 
 ## Completed ✓
 
@@ -178,7 +178,31 @@ _None - All previously identified important issues resolved in October 2025 refa
   - [x] All core memory files populated
   - [x] CLAUDE.md configuration complete
   - [x] Memory bank updated with refactoring changes
-  - [ ] Files committed to git (pending)
+  - [x] Files committed to git
+
+### v2.0.0 Release - COMPLETED ✓
+- **Target**: October 30, 2025
+- **Status**: Complete
+- **Requirements**:
+  - [x] Switch-based architecture implemented
+  - [x] Snooze functionality working
+  - [x] Automatic escalation implemented
+  - [x] All 90 tests passing
+  - [x] Git tag created with release notes
+  - [x] GitHub release workflow triggered
+  - [x] Cleaned up directory structure (removed www/)
+
+### v2.0.1 Release (HACS Fix) - COMPLETED ✓
+- **Target**: October 30, 2025
+- **Status**: Complete
+- **Requirements**:
+  - [x] Identified HACS 404 path issue
+  - [x] Moved compiled files to repository root
+  - [x] Updated hacs.json configuration
+  - [x] Updated build system and CI/CD
+  - [x] Followed established HACS patterns (card-mod, button-card)
+  - [x] Git tag created and pushed
+  - [x] HACS installation path verified
 
 ### HACS Official Listing - PENDING
 - **Target**: TBD (waiting on HACS team)
@@ -221,6 +245,35 @@ _None - All previously identified important issues resolved in October 2025 refa
 - **Loading States**: 0% → 100% coverage
 
 ## Changelog
+
+### v2.0.1 (October 30, 2025) - HACS Path Fix
+- **Bug Fix**: Fixed 404 error when installing via HACS custom repository
+- Moved compiled files from `dist/` to repository root
+- Simplified `hacs.json` (removed `content_in_root`, simplified `filename`)
+- Updated build system to output to root
+- Updated CI/CD workflows to reference root files
+- Follows established pattern from card-mod, button-card, boilerplate-card
+- **Impact**: HACS installation now works correctly
+
+### v2.0.0 (October 30, 2025) - Switch-Based Architecture
+- **Major Release**: Complete rewrite with switch-based control
+- **New Features**:
+  - Switch-based architecture (control via switch entities)
+  - Snooze functionality (5-minute auto-expiring silence)
+  - Automatic escalation (after 5 minutes without acknowledgment)
+  - Visual status badges (active, acknowledged, snoozed, escalated, resolved)
+  - Animations (pulsing effects for snoozed/escalated)
+  - Tooltips for each action switch
+- **Breaking Changes**:
+  - Requires Emergency Alerts Integration v2.0+
+  - Config: `show_cleared` → `show_resolved`, `cleared` → `resolved`
+  - Backend enforces mutual exclusivity (only one switch active)
+- **Technical**:
+  - 90 unit tests passing
+  - Full type safety with TypeScript
+  - Comprehensive error handling
+  - Production-ready code quality
+- **Repository Cleanup**: Removed `www/` directory
 
 ### v1.0.0 (August 2024)
 - Initial stable release
