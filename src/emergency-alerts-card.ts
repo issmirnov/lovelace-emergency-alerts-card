@@ -523,7 +523,7 @@ export class EmergencyAlertsCard extends LitElement {
         ? '✓'
         : '✓ Acknowledged'
       : this.config?.button_style === 'icons_only'
-        ? '✓'
+        ? '○'
         : 'Acknowledge';
 
     return html`
@@ -558,7 +558,7 @@ export class EmergencyAlertsCard extends LitElement {
         ? '🔕'
         : `🔕 Snoozed ${this._formatSnoozeTime(alert.snooze_until)}`
       : this.config?.button_style === 'icons_only'
-        ? '🔕'
+        ? '💤'
         : 'Snooze (5m)';
 
     return html`
@@ -875,8 +875,9 @@ export class EmergencyAlertsCardEditor extends LitElement {
     return [
       { value: 'active', label: 'Active' },
       { value: 'acknowledged', label: 'Acknowledged' },
+      { value: 'snoozed', label: 'Snoozed' },
       { value: 'escalated', label: 'Escalated' },
-      { value: 'cleared', label: 'Cleared' },
+      { value: 'resolved', label: 'Resolved' },
     ];
   }
 
@@ -1045,11 +1046,20 @@ export class EmergencyAlertsCardEditor extends LitElement {
           </div>
 
           <div class="field">
-            <label>Show Cleared Alerts</label>
+            <label>Show Snoozed Alerts</label>
             <ha-switch
-              .checked=${this.config.show_cleared ?? false}
+              .checked=${this.config.show_snoozed ?? true}
               @change=${(e: Event) =>
-                this._valueChanged('show_cleared', (e.target as HTMLInputElement).checked)}
+                this._valueChanged('show_snoozed', (e.target as HTMLInputElement).checked)}
+            ></ha-switch>
+          </div>
+
+          <div class="field">
+            <label>Show Resolved Alerts</label>
+            <ha-switch
+              .checked=${this.config.show_resolved ?? false}
+              @change=${(e: Event) =>
+                this._valueChanged('show_resolved', (e.target as HTMLInputElement).checked)}
             ></ha-switch>
           </div>
 
@@ -1133,20 +1143,20 @@ export class EmergencyAlertsCardEditor extends LitElement {
           </div>
 
           <div class="field">
-            <label>Show Clear Button</label>
+            <label>Show Snooze Button</label>
             <ha-switch
-              .checked=${this.config.show_clear_button ?? true}
+              .checked=${this.config.show_snooze_button ?? true}
               @change=${(e: Event) =>
-                this._valueChanged('show_clear_button', (e.target as HTMLInputElement).checked)}
+                this._valueChanged('show_snooze_button', (e.target as HTMLInputElement).checked)}
             ></ha-switch>
           </div>
 
           <div class="field">
-            <label>Show Escalate Button</label>
+            <label>Show Resolve Button</label>
             <ha-switch
-              .checked=${this.config.show_escalate_button ?? true}
+              .checked=${this.config.show_resolve_button ?? true}
               @change=${(e: Event) =>
-                this._valueChanged('show_escalate_button', (e.target as HTMLInputElement).checked)}
+                this._valueChanged('show_resolve_button', (e.target as HTMLInputElement).checked)}
             ></ha-switch>
           </div>
 
