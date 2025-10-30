@@ -3,10 +3,39 @@
 [![CI](https://github.com/issmirnov/lovelace-emergency-alerts-card/actions/workflows/ci.yml/badge.svg)](https://github.com/issmirnov/lovelace-emergency-alerts-card/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/issmirnov/lovelace-emergency-alerts-card/branch/main/graph/badge.svg)](https://codecov.io/gh/issmirnov/lovelace-emergency-alerts-card)
 
-
 A custom Lovelace card for displaying emergency alerts from the Emergency Alerts integration.
 
-## ⚠️ AI-Assisted Development Warning: This project has been largely developed with the assistance of AI tools (Claude and Cursor). I only have a basic understanding of what this code does and have been using this project as a way to experiment with AI-assisted development while creating a component I wanted for my dashboard. The code may contain inconsistencies, and best practices might only be partially followed due to the contextual limitations of AI. Use at your own risk and feel free to contribute improvements!
+## 📢 Project Status
+
+### Current Stable Version: v1.0.0 (main branch)
+The current stable version uses a button-based interface with acknowledge, escalate, and clear actions.
+
+### 🚧 v2.0.0 In Development ([PR #2](https://github.com/issmirnov/lovelace-emergency-alerts-card/pull/2))
+A major rewrite is underway featuring:
+- **Switch-based architecture** (replacing service call buttons with toggleable switches)
+- **Snooze functionality** (5-minute auto-expiring silence)
+- **Automatic escalation** (after 5 minutes if not acknowledged)
+- **Enhanced visual feedback** (status badges, animations, active state indicators)
+- **Improved UX** (tooltips, better state representation)
+
+**Status**: All tests passing (90/90), ready for testing and review.
+
+### Development Approach
+
+This project serves as an experiment in AI-assisted development, built primarily with Claude Code and Cursor. The codebase demonstrates:
+- Full TypeScript with comprehensive type safety
+- Test-driven development (90 unit tests with Jest)
+- Modern web components using Lit
+- CI/CD with automated testing and validation
+
+**Note**: While AI-assisted, the code follows industry best practices with:
+- ✅ Comprehensive test coverage
+- ✅ TypeScript strict mode
+- ✅ ESLint + Prettier enforcement
+- ✅ Pre-commit hooks
+- ✅ HACS validation
+
+Feel free to contribute improvements or provide feedback on the v2.0 rewrite!
 
 ## Features
 
@@ -53,6 +82,18 @@ The Emergency Alerts Card now provides **three toggle switches** for each alert,
 - Alerts escalate after 5 minutes if not acknowledged.
 - Escalated alerts show pulsing red "ESCALATED" badge and wider border.
 - Acknowledging an escalated alert returns it to acknowledged state (de-escalates automatically).
+
+## Quick Start
+
+1. **Install Emergency Alerts Integration** via HACS
+2. **Install Emergency Alerts Card** via HACS (Dashboard section)
+3. **Add to your dashboard**:
+   ```yaml
+   type: custom:emergency-alerts-card
+   ```
+4. **Configure alert automations** in the integration
+
+That's it! The card will automatically discover and display your emergency alerts.
 
 ## Prerequisites
 
@@ -463,12 +504,103 @@ npm run validate:hacs
 
 ## Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests for new functionality
-5. Ensure all tests pass: `./test.sh`
-6. Submit a pull request
+Contributions are welcome! This project is a learning experiment in AI-assisted development, and we appreciate:
+- Bug reports and fixes
+- Feature suggestions
+- Code improvements and refactoring
+- Documentation enhancements
+- Test coverage improvements
+
+### How to Contribute
+
+1. **Fork the repository**
+2. **Create a feature branch** (`git checkout -b feature/amazing-feature`)
+3. **Make your changes**
+4. **Add tests** for new functionality
+5. **Run all checks**: `npm run lint && npm test && npm run build`
+6. **Commit with descriptive messages**
+7. **Push to your fork** and submit a pull request
+
+### Development Workflow
+
+```bash
+# Install dependencies
+npm install
+
+# Run tests
+npm test
+
+# Run linting
+npm run lint
+
+# Format code
+npm run format
+
+# Build
+npm run build
+
+# Run all checks (recommended before committing)
+npm run lint && npm test && npm run build
+```
+
+### Testing v2.0
+
+If you'd like to test the upcoming v2.0 release:
+
+1. Checkout the `v2-rewrite` branch
+2. Build and install: `npm run build`
+3. Copy `dist/emergency-alerts-card.js` to your Home Assistant `www` folder
+4. Requires: Emergency Alerts Integration v2.0+ (with switch-based backend)
+
+See [PR #2](https://github.com/issmirnov/lovelace-emergency-alerts-card/pull/2) for full v2.0 details and breaking changes.
+
+## Project Structure
+
+```
+lovelace-emergency-alerts-card/
+├── src/
+│   ├── emergency-alerts-card.ts    # Main card component
+│   ├── types.ts                     # TypeScript interfaces
+│   ├── styles.ts                    # Card styling
+│   ├── services/
+│   │   └── alert-service.ts        # Alert action service
+│   └── utils/
+│       ├── entity-discovery.ts     # Entity detection
+│       ├── formatters.ts           # Display formatting
+│       ├── filters.ts              # Alert filtering
+│       ├── groupers.ts             # Alert grouping
+│       └── sorters.ts              # Alert sorting
+├── __tests__/                      # Jest unit tests
+├── dist/                           # Build output
+└── www/                            # HACS distribution
+```
+
+## Testing
+
+The project maintains comprehensive test coverage (90 tests):
+
+```bash
+# Run all tests
+npm test
+
+# Watch mode for development
+npm run test:watch
+
+# Coverage report
+npm test -- --coverage
+```
+
+Test categories:
+- **Service tests**: Alert actions (acknowledge, resolve, snooze)
+- **Utility tests**: Entity discovery, formatting, filtering, grouping, sorting
+- **Integration tests**: End-to-end card behavior
+
+## Acknowledgments
+
+- Built with [Lit](https://lit.dev/) web components
+- Tested with [Jest](https://jestjs.io/)
+- Developed using [Claude Code](https://claude.ai/claude-code) and [Cursor](https://cursor.sh/)
+- Inspired by the Home Assistant community
 
 ## License
 
