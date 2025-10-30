@@ -53,7 +53,7 @@ describe('AlertService', () => {
 
       try {
         await alertService.acknowledge('binary_sensor.test');
-      } catch (e) {
+      } catch {
         // Expected
       }
 
@@ -164,7 +164,7 @@ describe('AlertService', () => {
 
       try {
         await alertService.acknowledge('test');
-      } catch (e) {
+      } catch {
         // Expected
       }
 

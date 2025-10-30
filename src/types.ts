@@ -56,6 +56,7 @@ export interface HomeAssistant {
 export interface CardConfig {
   type: string;
   summary_entity?: string;
+  [key: string]: unknown; // Allow dynamic field access in editor
 
   // Display options
   show_acknowledged?: boolean;

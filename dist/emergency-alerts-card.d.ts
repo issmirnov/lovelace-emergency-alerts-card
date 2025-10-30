@@ -203,6 +203,39 @@ export declare class EmergencyAlertsCard extends LitElement {
      */
     static getConfigElement(): HTMLElement;
 }
+/**
+ * Card editor for Home Assistant Lovelace UI
+ * Provides visual configuration interface for the Emergency Alerts Card
+ * Note: This editor will be refactored in a future update to use the modular architecture
+ */
+export declare class EmergencyAlertsCardEditor extends LitElement {
+    hass?: HomeAssistant;
+    config?: CardConfig;
+    static get properties(): {
+        hass: {
+            attribute: boolean;
+        };
+        config: {
+            attribute: boolean;
+        };
+    };
+    static styles: any;
+    setConfig(config: CardConfig): void;
+    private _valueChanged;
+    private _fireConfigChanged;
+    private _updateStringArray;
+    private _addArrayItem;
+    private _removeArrayItem;
+    private _updateArrayItem;
+    private _toggleFilterValue;
+    private _getSummaryEntityOptions;
+    private _getSeverityOptions;
+    private _getStatusOptions;
+    private _getGroupOptions;
+    private _renderMultiSelectEditor;
+    private _renderStringArrayEditor;
+    render(): TemplateResult<1>;
+}
 declare global {
     interface Window {
         customCards: Array<{

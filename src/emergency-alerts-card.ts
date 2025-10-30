@@ -624,11 +624,553 @@ export class EmergencyAlertsCard extends LitElement {
   }
 }
 
-// Note: Card editor component is currently in the original file
-// TODO: Extract and refactor the editor component similarly
+/**
+ * Card editor for Home Assistant Lovelace UI
+ * Provides visual configuration interface for the Emergency Alerts Card
+ * Note: This editor will be refactored in a future update to use the modular architecture
+ */
+export class EmergencyAlertsCardEditor extends LitElement {
+  hass?: HomeAssistant;
+  config?: CardConfig;
 
-// Register the custom element
+  static get properties() {
+    return {
+      hass: { attribute: false },
+      config: { attribute: false },
+    };
+  }
+
+  static styles = css`
+    .editor {
+      padding: 16px;
+      background: var(--ha-card-background, white);
+      border-radius: var(--ha-card-border-radius, 8px);
+    }
+
+    .section {
+      margin-bottom: 24px;
+      padding: 16px;
+      border: 1px solid var(--divider-color, #e0e0e0);
+      border-radius: 8px;
+    }
+
+    .section-header {
+      font-size: 1.1em;
+      font-weight: bold;
+      margin-bottom: 12px;
+      color: var(--primary-text-color);
+      border-bottom: 1px solid var(--divider-color, #e0e0e0);
+      padding-bottom: 8px;
+    }
+
+    .field {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 12px 0;
+      min-height: 40px;
+    }
+
+    .field label {
+      flex: 1;
+      margin-right: 16px;
+      font-weight: 500;
+      color: var(--primary-text-color);
+    }
+
+    .field-input {
+      flex: 1;
+      max-width: 300px;
+    }
+
+    ha-textfield,
+    ha-select {
+      width: 100%;
+    }
+
+    ha-switch {
+      margin-left: auto;
+    }
+
+    .multi-select-container {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid var(--divider-color, #e0e0e0);
+      border-radius: 4px;
+      padding: 8px;
+    }
+
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 0;
+    }
+
+    .checkbox-label {
+      font-size: 0.9em;
+      color: var(--primary-text-color);
+      cursor: pointer;
+    }
+
+    .checkbox-item:hover {
+      background: var(--secondary-background-color, #f5f5f5);
+      border-radius: 4px;
+      padding: 4px 8px;
+      margin: 0 -8px;
+    }
+
+    .checkbox-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .help-text {
+      font-size: 0.8em;
+      color: var(--secondary-text-color);
+      margin-top: 4px;
+      font-style: italic;
+    }
+
+    .array-input {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .array-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .array-item ha-textfield {
+      flex: 1;
+    }
+
+    .remove-btn {
+      --mdc-theme-primary: var(--error-color, #f44336);
+    }
+  `;
+
+  setConfig(config: CardConfig): void {
+    this.config = config;
+  }
+
+  private _valueChanged(field: string, value: unknown): void {
+    if (!this.config) return;
+
+    const newConfig = { ...this.config, [field]: value };
+    this.config = newConfig;
+    this._fireConfigChanged();
+  }
+
+  private _fireConfigChanged(): void {
+    const event = new CustomEvent('config-changed', {
+      detail: { config: this.config },
+      bubbles: true,
+      composed: true,
+    });
+    this.dispatchEvent(event);
+  }
+
+  private _updateStringArray(field: string, values: string[]): void {
+    this._valueChanged(field, values);
+  }
+
+  private _addArrayItem(field: string): void {
+    const currentArray = (this.config as Record<string, unknown>)?.[field] as string[] || [];
+    this._updateStringArray(field, [...currentArray, '']);
+  }
+
+  private _removeArrayItem(field: string, index: number): void {
+    const currentArray = (this.config as Record<string, unknown>)?.[field] as string[] || [];
+    const newArray = currentArray.filter((_, i) => i !== index);
+    this._updateStringArray(field, newArray);
+  }
+
+  private _updateArrayItem(field: string, index: number, value: string): void {
+    const currentArray = (this.config as Record<string, unknown>)?.[field] as string[] || [];
+    const newArray = [...currentArray];
+    newArray[index] = value;
+    this._updateStringArray(field, newArray);
+  }
+
+  private _toggleFilterValue(field: string, value: string, checked: boolean): void {
+    const currentArray = (this.config as Record<string, unknown>)?.[field] as string[] || [];
+    let newArray: string[];
+
+    if (checked) {
+      newArray = currentArray.includes(value) ? currentArray : [...currentArray, value];
+    } else {
+      newArray = currentArray.filter((v: string) => v !== value);
+    }
+
+    this._updateStringArray(field, newArray);
+  }
+
+  private _getSummaryEntityOptions() {
+    if (!this.hass) return [];
+
+    const summaryEntities = Object.values(this.hass.states)
+      .filter((entity: HassEntity) => {
+        const entityId = entity.entity_id;
+        return (
+          entityId.startsWith('sensor.emergency_alerts') &&
+          (entityId.includes('summary') || entityId.includes('Summary'))
+        );
+      })
+      .sort((a, b) => a.entity_id.localeCompare(b.entity_id));
+
+    return summaryEntities.map(
+      (entity) => html`
+        <mwc-list-item value="${entity.entity_id}">
+          ${entity.attributes?.friendly_name || entity.entity_id}
+        </mwc-list-item>
+      `
+    );
+  }
+
+  private _getSeverityOptions() {
+    return [
+      { value: 'critical', label: 'Critical' },
+      { value: 'warning', label: 'Warning' },
+      { value: 'info', label: 'Info' },
+    ];
+  }
+
+  private _getStatusOptions() {
+    return [
+      { value: 'active', label: 'Active' },
+      { value: 'acknowledged', label: 'Acknowledged' },
+      { value: 'escalated', label: 'Escalated' },
+      { value: 'cleared', label: 'Cleared' },
+    ];
+  }
+
+  private _getGroupOptions() {
+    if (!this.hass) return [];
+
+    const groups = new Set<string>();
+    Object.values(this.hass.states).forEach((entity: HassEntity) => {
+      const group = (entity.attributes as Record<string, unknown>)?.group;
+      if (typeof group === 'string') {
+        groups.add(group);
+      }
+    });
+
+    return Array.from(groups)
+      .sort()
+      .map(group => ({
+        value: group,
+        label: group.charAt(0).toUpperCase() + group.slice(1),
+      }));
+  }
+
+  private _renderMultiSelectEditor(
+    field: string,
+    label: string,
+    options: Array<{ value: string; label: string }>,
+    helpText?: string
+  ) {
+    const selectedValues = (this.config as Record<string, unknown>)?.[field] as string[] || [];
+
+    return html`
+      <div class="field">
+        <label>${label}</label>
+        <div class="field-input">
+          <div class="multi-select-container">
+            ${options.map(
+              option => html`
+                <div class="checkbox-item">
+                  <ha-checkbox
+                    .checked=${selectedValues.includes(option.value)}
+                    @change=${(e: Event) =>
+                      this._toggleFilterValue(field, option.value, (e.target as HTMLInputElement).checked)}
+                  ></ha-checkbox>
+                  <span class="checkbox-label">${option.label}</span>
+                </div>
+              `
+            )}
+          </div>
+          ${helpText ? html`<div class="help-text">${helpText}</div>` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderStringArrayEditor(field: string, label: string, helpText?: string) {
+    const values = (this.config as Record<string, unknown>)?.[field] as string[] || [];
+
+    return html`
+      <div class="field">
+        <label>${label}</label>
+        <div class="field-input">
+          <div class="array-input">
+            ${values.map(
+              (value: string, index: number) => html`
+                <div class="array-item">
+                  <ha-textfield
+                    .value=${value}
+                    @input=${(e: Event) => this._updateArrayItem(field, index, (e.target as HTMLInputElement).value)}
+                    placeholder="Enter value..."
+                  ></ha-textfield>
+                  <mwc-button
+                    class="remove-btn"
+                    @click=${() => this._removeArrayItem(field, index)}
+                    outlined
+                  >
+                    Remove
+                  </mwc-button>
+                </div>
+              `
+            )}
+            <mwc-button @click=${() => this._addArrayItem(field)} outlined>
+              Add ${label.replace(/s$/, '')}
+            </mwc-button>
+          </div>
+          ${helpText ? html`<div class="help-text">${helpText}</div>` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  render() {
+    if (!this.config) {
+      return html``;
+    }
+
+    return html`
+      <div class="editor">
+        <!-- Basic Configuration -->
+        <div class="section">
+          <div class="section-header">Basic Configuration</div>
+
+          <div class="field">
+            <label>Summary Entity</label>
+            <div class="field-input">
+              <ha-select
+                .value=${this.config.summary_entity || ''}
+                @change=${(e: Event) => this._valueChanged('summary_entity', (e.target as HTMLSelectElement).value)}
+              >
+                <mwc-list-item value="">Auto-detect (recommended)</mwc-list-item>
+                ${this._getSummaryEntityOptions()}
+              </ha-select>
+              <div class="help-text">Optional: Entity that provides summary information</div>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Group By</label>
+            <div class="field-input">
+              <ha-select
+                .value=${this.config.group_by || 'severity'}
+                @change=${(e: Event) => this._valueChanged('group_by', (e.target as HTMLSelectElement).value)}
+              >
+                <mwc-list-item value="severity">Severity</mwc-list-item>
+                <mwc-list-item value="group">Group</mwc-list-item>
+                <mwc-list-item value="status">Status</mwc-list-item>
+                <mwc-list-item value="none">None</mwc-list-item>
+              </ha-select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Sort By</label>
+            <div class="field-input">
+              <ha-select
+                .value=${this.config.sort_by || 'first_triggered'}
+                @change=${(e: Event) => this._valueChanged('sort_by', (e.target as HTMLSelectElement).value)}
+              >
+                <mwc-list-item value="first_triggered">First Triggered</mwc-list-item>
+                <mwc-list-item value="severity">Severity</mwc-list-item>
+                <mwc-list-item value="name">Name</mwc-list-item>
+                <mwc-list-item value="group">Group</mwc-list-item>
+              </ha-select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Display Options -->
+        <div class="section">
+          <div class="section-header">Display Options</div>
+
+          <div class="field">
+            <label>Show Acknowledged Alerts</label>
+            <ha-switch
+              .checked=${this.config.show_acknowledged ?? true}
+              @change=${(e: Event) => this._valueChanged('show_acknowledged', (e.target as HTMLInputElement).checked)}
+            ></ha-switch>
+          </div>
+
+          <div class="field">
+            <label>Show Cleared Alerts</label>
+            <ha-switch
+              .checked=${this.config.show_cleared ?? false}
+              @change=${(e: Event) => this._valueChanged('show_cleared', (e.target as HTMLInputElement).checked)}
+            ></ha-switch>
+          </div>
+
+          <div class="field">
+            <label>Show Escalated Alerts</label>
+            <ha-switch
+              .checked=${this.config.show_escalated ?? true}
+              @change=${(e: Event) => this._valueChanged('show_escalated', (e.target as HTMLInputElement).checked)}
+            ></ha-switch>
+          </div>
+
+          <div class="field">
+            <label>Compact Mode</label>
+            <ha-switch
+              .checked=${this.config.compact_mode ?? false}
+              @change=${(e: Event) => this._valueChanged('compact_mode', (e.target as HTMLInputElement).checked)}
+            ></ha-switch>
+          </div>
+
+          <div class="field">
+            <label>Show Timestamps</label>
+            <ha-switch
+              .checked=${this.config.show_timestamps ?? true}
+              @change=${(e: Event) => this._valueChanged('show_timestamps', (e.target as HTMLInputElement).checked)}
+            ></ha-switch>
+          </div>
+
+          <div class="field">
+            <label>Show Group Labels</label>
+            <ha-switch
+              .checked=${this.config.show_group_labels ?? true}
+              @change=${(e: Event) => this._valueChanged('show_group_labels', (e.target as HTMLInputElement).checked)}
+            ></ha-switch>
+          </div>
+
+          <div class="field">
+            <label>Show Severity Icons</label>
+            <ha-switch
+              .checked=${this.config.show_severity_icons ?? true}
+              @change=${(e: Event) => this._valueChanged('show_severity_icons', (e.target as HTMLInputElement).checked)}
+            ></ha-switch>
+          </div>
+
+          <div class="field">
+            <label>Max Alerts Per Group</label>
+            <div class="field-input">
+              <ha-textfield
+                type="number"
+                .value=${String(this.config.max_alerts_per_group || 10)}
+                @input=${(e: Event) =>
+                  this._valueChanged('max_alerts_per_group', parseInt((e.target as HTMLInputElement).value) || 10)}
+                min="1"
+                max="100"
+              ></ha-textfield>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="section">
+          <div class="section-header">Action Buttons</div>
+
+          <div class="field">
+            <label>Show Acknowledge Button</label>
+            <ha-switch
+              .checked=${this.config.show_acknowledge_button ?? true}
+              @change=${(e: Event) => this._valueChanged('show_acknowledge_button', (e.target as HTMLInputElement).checked)}
+            ></ha-switch>
+          </div>
+
+          <div class="field">
+            <label>Show Clear Button</label>
+            <ha-switch
+              .checked=${this.config.show_clear_button ?? true}
+              @change=${(e: Event) => this._valueChanged('show_clear_button', (e.target as HTMLInputElement).checked)}
+            ></ha-switch>
+          </div>
+
+          <div class="field">
+            <label>Show Escalate Button</label>
+            <ha-switch
+              .checked=${this.config.show_escalate_button ?? true}
+              @change=${(e: Event) => this._valueChanged('show_escalate_button', (e.target as HTMLInputElement).checked)}
+            ></ha-switch>
+          </div>
+
+          <div class="field">
+            <label>Button Style</label>
+            <div class="field-input">
+              <ha-select
+                .value=${this.config.button_style || 'compact'}
+                @change=${(e: Event) => this._valueChanged('button_style', (e.target as HTMLSelectElement).value)}
+              >
+                <mwc-list-item value="compact">Compact</mwc-list-item>
+                <mwc-list-item value="full">Full</mwc-list-item>
+                <mwc-list-item value="icons_only">Icons Only</mwc-list-item>
+              </ha-select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filtering -->
+        <div class="section">
+          <div class="section-header">Filtering</div>
+
+          ${this._renderMultiSelectEditor(
+            'severity_filter',
+            'Severity Filter',
+            this._getSeverityOptions(),
+            'Select which severity levels to show (leave all unchecked to show all)'
+          )}
+          ${this._renderMultiSelectEditor(
+            'group_filter',
+            'Group Filter',
+            this._getGroupOptions(),
+            'Select which alert groups to show (leave all unchecked to show all)'
+          )}
+          ${this._renderMultiSelectEditor(
+            'status_filter',
+            'Status Filter',
+            this._getStatusOptions(),
+            'Select which statuses to show (leave all unchecked to show all)'
+          )}
+        </div>
+
+        <!-- Advanced Options -->
+        <div class="section">
+          <div class="section-header">Advanced Options</div>
+
+          ${this._renderStringArrayEditor(
+            'entity_patterns',
+            'Entity Patterns',
+            'Patterns to match emergency alert entities (use * for wildcards)'
+          )}
+
+          <div class="field">
+            <label>Refresh Interval (seconds)</label>
+            <div class="field-input">
+              <ha-textfield
+                type="number"
+                .value=${String(this.config.refresh_interval || 30)}
+                @input=${(e: Event) =>
+                  this._valueChanged('refresh_interval', parseInt((e.target as HTMLInputElement).value) || 30)}
+                min="5"
+                max="300"
+              ></ha-textfield>
+              <div class="help-text">How often to refresh alert data (5-300 seconds)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+}
+
+// Register the custom elements
 customElements.define('emergency-alerts-card', EmergencyAlertsCard);
+customElements.define('emergency-alerts-card-editor', EmergencyAlertsCardEditor);
 
 // Declare types for Home Assistant
 declare global {
