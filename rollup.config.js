@@ -8,6 +8,7 @@ export default {
   output: {
     file: 'dist/emergency-alerts-card.js',
     format: 'es',
+    sourcemap: true,
     inlineDynamicImports: true
   },
   plugins: [
@@ -18,9 +19,13 @@ export default {
     commonjs(),
     typescript({
       tsconfig: 'tsconfig.json',
-      sourceMap: false
+      sourceMap: true,
+      inlineSources: true
     }),
-    terser()
+    terser({
+      // Keep sourcemaps in minified output
+      sourceMap: true
+    })
   ],
   external: []
 }; 
