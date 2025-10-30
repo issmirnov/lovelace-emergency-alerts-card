@@ -6,10 +6,15 @@ yarn-error.log*
 
 # Build output
 build/
+dist/
 
 # TypeScript declarations (generated)
 *.d.ts
 *.d.ts.map
+
+# Keep HACS distribution files at root
+!emergency-alerts-card.js
+!emergency-alerts-card.js.map
 
 # Coverage reports
 coverage/
@@ -33,9 +38,4 @@ Thumbs.db
 .env.local
 .env.development.local
 .env.test.local
-.env.production.local
-
-# Keep dist/ directory and built card for HACS
-!dist/
-!dist/emergency-alerts-card.js
-!dist/emergency-alerts-card.js.map 
+.env.production.local 
