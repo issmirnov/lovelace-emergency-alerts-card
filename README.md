@@ -5,55 +5,34 @@
 
 A custom Lovelace card for displaying emergency alerts from the Emergency Alerts integration.
 
-## 📢 Project Status
+## About This Project
 
-### Current Stable Version: v1.0.0 (main branch)
-The current stable version uses a button-based interface with acknowledge, escalate, and clear actions.
+This project is an experiment in AI-assisted development, built primarily with Claude Code and Cursor. Despite being AI-generated, the codebase follows industry best practices:
 
-### 🚧 v2.0.0 In Development ([PR #2](https://github.com/issmirnov/lovelace-emergency-alerts-card/pull/2))
-A major rewrite is underway featuring:
-- **Switch-based architecture** (replacing service call buttons with toggleable switches)
-- **Snooze functionality** (5-minute auto-expiring silence)
-- **Automatic escalation** (after 5 minutes if not acknowledged)
-- **Enhanced visual feedback** (status badges, animations, active state indicators)
-- **Improved UX** (tooltips, better state representation)
-
-**Status**: All tests passing (90/90), ready for testing and review.
-
-### Development Approach
-
-This project serves as an experiment in AI-assisted development, built primarily with Claude Code and Cursor. The codebase demonstrates:
-- Full TypeScript with comprehensive type safety
-- Test-driven development (90 unit tests with Jest)
-- Modern web components using Lit
-- CI/CD with automated testing and validation
-
-**Note**: While AI-assisted, the code follows industry best practices with:
-- ✅ Comprehensive test coverage
-- ✅ TypeScript strict mode
+- ✅ Full TypeScript with strict mode
+- ✅ Comprehensive test coverage (90 unit tests)
+- ✅ Modern web components (Lit)
+- ✅ CI/CD with automated testing
 - ✅ ESLint + Prettier enforcement
-- ✅ Pre-commit hooks
-- ✅ HACS validation
+- ✅ HACS validated
 
-Feel free to contribute improvements or provide feedback on the v2.0 rewrite!
+Contributions and feedback welcome!
 
 ## Features
 
 - **Real-time Alert Display**: Shows active emergency alerts with severity indicators
 - **Alert Grouping**: Groups alerts by severity, status, group, or none
-- **Switch-Based Actions** (v2.0): Toggle switches for Acknowledge, Snooze (5min), and Resolve
+- **Switch-Based Actions**: Toggle switches for Acknowledge, Snooze (5min), and Resolve
 - **Visual State Indicators**: Animated status badges, color-coded borders, and pulsing effects
 - **Smart State Management**: Backend enforces mutual exclusivity - only one response state active at a time
 - **Automatic Escalation**: Alerts auto-escalate after 5 minutes if not acknowledged
 - **Time Tracking**: Shows when alerts were first triggered and snooze expiration times
 - **Responsive Design**: Adapts to different screen sizes with mobile-optimized layouts
-- **Home Assistant Integration**: Seamlessly integrates with the Emergency Alerts integration v2.0+
+- **Home Assistant Integration**: Seamlessly integrates with the Emergency Alerts integration
 
-## v2.0 Alert Action Switches Explained
+## Alert Action Switches
 
-**BREAKING CHANGE**: v2.0 introduces a switch-based architecture replacing the old button-based system.
-
-The Emergency Alerts Card now provides **three toggle switches** for each alert, with mutual exclusivity enforced by the backend:
+The Emergency Alerts Card provides **three toggle switches** for each alert, with mutual exclusivity enforced by the backend:
 
 | Switch         | What It Does | Behavior | Visual State |
 |----------------|--------------|----------|--------------|
@@ -61,7 +40,7 @@ The Emergency Alerts Card now provides **three toggle switches** for each alert,
 | **Snooze (5m)** | Silence for 5 minutes - auto-expires | Turns ON (auto-turns OFF after 5min) | Orange glow with pulse animation |
 | **Resolve**    | Mark as fixed - won't re-trigger until condition fully clears | Toggle ON/OFF | Blue glow when active |
 
-**Key v2.0 Behaviors:**
+**Key Behaviors:**
 
 - **Mutual Exclusivity**: Only ONE switch can be ON at a time. Turning one ON automatically turns others OFF.
 - **Auto-Escalation**: If an active alert isn't acknowledged within 5 minutes, it automatically escalates (pulsing red animation).
@@ -77,8 +56,8 @@ The Emergency Alerts Card now provides **three toggle switches** for each alert,
 5. You toggle **Resolve** ON: All other switches turn OFF, "RESOLVED" badge appears (blue), alert fades to 50% opacity.
 6. Condition re-occurs: If physical condition re-triggers while resolved, alert won't re-activate until resolve is turned OFF.
 
-**Escalation (Automatic Only in v2.0):**
-- Escalation is **automatic** - no manual escalate button.
+**Automatic Escalation:**
+- Escalation is automatic - no manual escalate button.
 - Alerts escalate after 5 minutes if not acknowledged.
 - Escalated alerts show pulsing red "ESCALATED" badge and wider border.
 - Acknowledging an escalated alert returns it to acknowledged state (de-escalates automatically).
@@ -542,17 +521,6 @@ npm run build
 # Run all checks (recommended before committing)
 npm run lint && npm test && npm run build
 ```
-
-### Testing v2.0
-
-If you'd like to test the upcoming v2.0 release:
-
-1. Checkout the `v2-rewrite` branch
-2. Build and install: `npm run build`
-3. Copy `dist/emergency-alerts-card.js` to your Home Assistant `www` folder
-4. Requires: Emergency Alerts Integration v2.0+ (with switch-based backend)
-
-See [PR #2](https://github.com/issmirnov/lovelace-emergency-alerts-card/pull/2) for full v2.0 details and breaking changes.
 
 ## Project Structure
 
