@@ -5,7 +5,7 @@
 import { Alert, CardConfig } from '../types';
 
 /**
- * Determines if an alert should be displayed based on configuration filters
+ * Determines if an alert should be displayed based on configuration filters (v2.0)
  * Applies severity, group, and status filters in sequence
  * @param alert The alert to check
  * @param config Card configuration with filter settings
@@ -33,7 +33,8 @@ export function shouldShowAlert(alert: Alert, config: CardConfig): boolean {
 
   // Individual status toggles - these override status_filter for specific states
   if (!config.show_acknowledged && alert.acknowledged) return false;
-  if (!config.show_cleared && alert.cleared) return false;
+  if (!config.show_snoozed && alert.snoozed) return false; // NEW in v2.0
+  if (!config.show_resolved && alert.resolved) return false; // RENAMED from show_cleared
   if (!config.show_escalated && alert.escalated) return false;
 
   return true;

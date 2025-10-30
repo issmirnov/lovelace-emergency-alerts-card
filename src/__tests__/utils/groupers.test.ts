@@ -21,7 +21,8 @@ describe('groupers', () => {
     group: 'security',
     acknowledged: false,
     escalated: false,
-    cleared: false,
+    snoozed: false,
+    resolved: false,
     status: 'active',
   };
 
@@ -33,7 +34,8 @@ describe('groupers', () => {
     group: 'safety',
     acknowledged: true,
     escalated: false,
-    cleared: false,
+    snoozed: false,
+    resolved: false,
     status: 'acknowledged',
   };
 
@@ -45,8 +47,9 @@ describe('groupers', () => {
     group: 'security',
     acknowledged: false,
     escalated: false,
-    cleared: true,
-    status: 'cleared',
+    snoozed: false,
+    resolved: true,
+    status: 'resolved',
   };
 
   describe('groupAlertsBySeverity', () => {
@@ -107,8 +110,9 @@ describe('groupers', () => {
 
       expect(grouped.active).toHaveLength(1);
       expect(grouped.acknowledged).toHaveLength(1);
-      expect(grouped.cleared).toHaveLength(1);
+      expect(grouped.snoozed).toHaveLength(0);
       expect(grouped.escalated).toHaveLength(0);
+      expect(grouped.resolved).toHaveLength(1);
     });
 
     test('creates empty groups for all status types', () => {
@@ -116,8 +120,9 @@ describe('groupers', () => {
 
       expect(grouped.active).toHaveLength(1);
       expect(grouped.acknowledged).toHaveLength(0);
+      expect(grouped.snoozed).toHaveLength(0);
       expect(grouped.escalated).toHaveLength(0);
-      expect(grouped.cleared).toHaveLength(0);
+      expect(grouped.resolved).toHaveLength(0);
     });
   });
 

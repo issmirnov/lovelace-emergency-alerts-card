@@ -93,24 +93,26 @@ export class EmergencyAlertsCard extends LitElement {
       throw new Error('Invalid configuration');
     }
 
-    // Merge user config with defaults
+    // Merge user config with defaults (v2.0)
     this.config = {
       show_acknowledged: true,
-      show_cleared: false,
+      show_snoozed: true, // NEW in v2.0
+      show_resolved: false, // RENAMED from show_cleared
       show_escalated: true,
       group_by: 'severity',
       sort_by: 'first_triggered',
       severity_filter: ['critical', 'warning', 'info'],
       group_filter: [],
-      status_filter: ['active', 'acknowledged', 'escalated'],
+      status_filter: ['active', 'acknowledged', 'snoozed', 'escalated'], // Updated for v2.0
       compact_mode: false,
       show_timestamps: true,
       show_group_labels: true,
       show_severity_icons: true,
+      show_status_badge: true, // NEW in v2.0
       max_alerts_per_group: 50,
       show_acknowledge_button: true,
-      show_clear_button: true,
-      show_escalate_button: true,
+      show_snooze_button: true, // NEW in v2.0
+      show_resolve_button: true, // RENAMED from show_clear_button
       button_style: 'compact',
       entity_patterns: ['binary_sensor.emergency_*'],
       refresh_interval: 30,
@@ -264,17 +266,17 @@ export class EmergencyAlertsCard extends LitElement {
   }
 
   /**
-   * Handles clear action with loading state
-   * @param entity_id Entity ID to clear
+   * Handles resolve action with loading state (v2.0 - renamed from clear)
+   * @param entity_id Entity ID to resolve
    */
-  private async _handleClear(entity_id: string): Promise<void> {
+  private async _handleResolve(entity_id: string): Promise<void> {
     if (!this.alertService) return;
 
     this.loadingActions.add(entity_id);
     this.requestUpdate();
 
     try {
-      await this.alertService.clear(entity_id);
+      await this.alertService.resolve(entity_id);
     } finally {
       this.loadingActions.delete(entity_id);
       this.requestUpdate();
@@ -282,17 +284,18 @@ export class EmergencyAlertsCard extends LitElement {
   }
 
   /**
-   * Handles escalate action with loading state
-   * @param entity_id Entity ID to escalate
+   * Handles snooze action with loading state (v2.0 - NEW)
+   * Silences alert for configured duration (default 5 minutes)
+   * @param entity_id Entity ID to snooze
    */
-  private async _handleEscalate(entity_id: string): Promise<void> {
+  private async _handleSnooze(entity_id: string): Promise<void> {
     if (!this.alertService) return;
 
     this.loadingActions.add(entity_id);
     this.requestUpdate();
 
     try {
-      await this.alertService.escalate(entity_id);
+      await this.alertService.snooze(entity_id);
     } finally {
       this.loadingActions.delete(entity_id);
       this.requestUpdate();
@@ -300,30 +303,47 @@ export class EmergencyAlertsCard extends LitElement {
   }
 
   /**
-   * Handles de-escalate action with loading state
-   * @param entity_id Entity ID to de-escalate
-   */
-  private async _handleDeEscalate(entity_id: string): Promise<void> {
-    if (!this.alertService) return;
-
-    this.loadingActions.add(entity_id);
-    this.requestUpdate();
-
-    try {
-      await this.alertService.deEscalate(entity_id);
-    } finally {
-      this.loadingActions.delete(entity_id);
-      this.requestUpdate();
-    }
-  }
-
-  /**
-   * Determines if action buttons should be shown for an alert
+   * Determines if action buttons should be shown for an alert (v2.0)
    * @param alert Alert to check
    * @returns true if actions should be displayed
    */
   private _shouldShowActions(alert: Alert): boolean {
-    return !alert.cleared;
+    // Show actions for all alert states (switches are toggleable)
+    return true;
+  }
+
+  /**
+   * Formats snooze_until timestamp (v2.0 helper)
+   * @param snooze_until ISO timestamp when snooze expires
+   * @returns Formatted string like "until 2:30 PM"
+   */
+  private _formatSnoozeTime(snooze_until?: string): string {
+    if (!snooze_until) return '';
+
+    const snoozeDate = new Date(snooze_until);
+    const timeStr = snoozeDate.toLocaleTimeString([], {
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+
+    return `until ${timeStr}`;
+  }
+
+  /**
+   * Renders status badge showing current alert state (v2.0)
+   * @param alert Alert to render badge for
+   * @returns Lit template
+   */
+  private _renderStatusBadge(alert: Alert): TemplateResult | string {
+    if (!this.config?.show_status_badge) {
+      return '';
+    }
+
+    return html`
+      <span class="status-badge ${alert.status}">
+        ${alert.status.toUpperCase()}
+      </span>
+    `;
   }
 
   /**
@@ -412,19 +432,20 @@ export class EmergencyAlertsCard extends LitElement {
     const classes = [
       'alert-item',
       `alert-${alert.severity}`,
+      `state-${alert.status}`, // NEW: state-based class for animations
       alert.acknowledged ? 'alert-acknowledged' : '',
+      alert.snoozed ? 'alert-snoozed' : '', // NEW in v2.0
       alert.escalated ? 'alert-escalated' : '',
-      alert.cleared ? 'alert-cleared' : '',
+      alert.resolved ? 'alert-resolved' : '', // RENAMED from alert-cleared
     ]
       .filter(Boolean)
       .join(' ');
 
     return html`
       <div class=${classes}>
-        ${this._renderAlertIcon(alert)} ${this._renderAlertContent(alert)}
-        ${alert.state === 'on' && this._shouldShowActions(alert)
-          ? this._renderAlertActions(alert)
-          : ''}
+        ${this._renderAlertIcon(alert)} ${this._renderStatusBadge(alert)}
+        ${this._renderAlertContent(alert)}
+        ${this._shouldShowActions(alert) ? this._renderAlertActions(alert) : ''}
       </div>
     `;
   }
@@ -454,7 +475,10 @@ export class EmergencyAlertsCard extends LitElement {
   private _renderAlertContent(alert: Alert): TemplateResult {
     return html`
       <div class="alert-content">
-        <div class="alert-name">${alert.name}</div>
+        <div class="alert-name">
+          ${alert.name}
+          ${alert.escalated ? html`<span class="escalated-indicator">⚠️</span>` : ''}
+        </div>
         <div class="alert-meta">
           ${this.config?.show_group_labels ? html`<span>${alert.group}</span>` : ''}
           ${this.config?.show_timestamps && alert.first_triggered
@@ -476,7 +500,8 @@ export class EmergencyAlertsCard extends LitElement {
     return html`
       <div class="action-buttons">
         ${this._renderAcknowledgeButton(alert, isLoading)}
-        ${this._renderEscalateButton(alert, isLoading)} ${this._renderClearButton(alert, isLoading)}
+        ${this._renderSnoozeButton(alert, isLoading)}
+        ${this._renderResolveButton(alert, isLoading)}
       </div>
     `;
   }
@@ -488,17 +513,27 @@ export class EmergencyAlertsCard extends LitElement {
    * @returns Lit template
    */
   private _renderAcknowledgeButton(alert: Alert, isLoading: boolean): TemplateResult | string {
-    if (!this.config?.show_acknowledge_button || alert.acknowledged || alert.escalated) {
+    if (!this.config?.show_acknowledge_button) {
       return '';
     }
 
-    const label = this.config?.button_style === 'icons_only' ? '✓' : 'ACK';
+    const isActive = alert.acknowledged;
+    const label = isActive
+      ? this.config?.button_style === 'icons_only'
+        ? '✓'
+        : '✓ Acknowledged'
+      : this.config?.button_style === 'icons_only'
+        ? '✓'
+        : 'Acknowledge';
 
     return html`
       <button
-        class="action-btn acknowledge-btn ${isLoading ? 'loading' : ''}"
+        class="action-btn acknowledge-btn ${isLoading ? 'loading' : ''} ${isActive
+          ? 'acknowledged-active'
+          : ''}"
         ?disabled=${isLoading}
         @click=${() => this._handleAcknowledge(alert.entity_id)}
+        title="Mark as working on it (prevents auto-escalation). Turning this ON will turn other switches OFF."
       >
         ${isLoading ? '⏳' : label}
       </button>
@@ -506,63 +541,69 @@ export class EmergencyAlertsCard extends LitElement {
   }
 
   /**
-   * Renders escalate/de-escalate button if appropriate
+   * Renders snooze button (v2.0 - NEW)
+   * Shows active state when snoozed with static timestamp
    * @param alert Alert to render button for
    * @param isLoading Whether action is in progress
    * @returns Lit template
    */
-  private _renderEscalateButton(alert: Alert, isLoading: boolean): TemplateResult | string {
-    if (!this.config?.show_escalate_button || alert.cleared) {
+  private _renderSnoozeButton(alert: Alert, isLoading: boolean): TemplateResult | string {
+    if (!this.config?.show_snooze_button) {
       return '';
     }
 
-    if (alert.escalated) {
-      const label = this.config?.button_style === 'icons_only' ? '↓' : 'DE-ESC';
-      return html`
-        <button
-          class="action-btn de-escalate-btn ${isLoading ? 'loading' : ''}"
-          ?disabled=${isLoading}
-          @click=${() => this._handleDeEscalate(alert.entity_id)}
-        >
-          ${isLoading ? '⏳' : label}
-        </button>
-      `;
-    }
-
-    if (!alert.acknowledged && !alert.escalated) {
-      const label = this.config?.button_style === 'icons_only' ? '↑' : 'ESC';
-      return html`
-        <button
-          class="action-btn escalate-btn ${isLoading ? 'loading' : ''}"
-          ?disabled=${isLoading}
-          @click=${() => this._handleEscalate(alert.entity_id)}
-        >
-          ${isLoading ? '⏳' : label}
-        </button>
-      `;
-    }
-
-    return '';
-  }
-
-  /**
-   * Renders clear button if appropriate
-   * @param alert Alert to render button for
-   * @param isLoading Whether action is in progress
-   * @returns Lit template
-   */
-  private _renderClearButton(alert: Alert, isLoading: boolean): TemplateResult | string {
-    if (!this.config?.show_clear_button) {
-      return '';
-    }
-
-    const label = this.config?.button_style === 'icons_only' ? '×' : 'CLR';
+    const isActive = alert.snoozed;
+    const label = isActive
+      ? this.config?.button_style === 'icons_only'
+        ? '🔕'
+        : `🔕 Snoozed ${this._formatSnoozeTime(alert.snooze_until)}`
+      : this.config?.button_style === 'icons_only'
+        ? '🔕'
+        : 'Snooze (5m)';
 
     return html`
       <button
-        class="action-btn clear-btn ${isLoading ? 'loading' : ''}"
+        class="action-btn snooze-btn ${isLoading ? 'loading' : ''} ${isActive
+          ? 'snoozed-active'
+          : ''}"
         ?disabled=${isLoading}
-        @click=${() => this._handleClear(alert.entity_id)}
+        @click=${() => this._handleSnooze(alert.entity_id)}
+        title="Silence for 5 minutes (auto-expires). Turning this ON will turn other switches OFF."
+      >
+        ${isLoading ? '⏳' : label}
+      </button>
+    `;
+  }
+
+  /**
+   * Renders resolve button (v2.0 - renamed from clear)
+   * Shows active state when resolved
+   * @param alert Alert to render button for
+   * @param isLoading Whether action is in progress
+   * @returns Lit template
+   */
+  private _renderResolveButton(alert: Alert, isLoading: boolean): TemplateResult | string {
+    if (!this.config?.show_resolve_button) {
+      return '';
+    }
+
+    const isActive = alert.resolved;
+    const label = isActive
+      ? this.config?.button_style === 'icons_only'
+        ? '✓'
+        : '✓ Resolved'
+      : this.config?.button_style === 'icons_only'
+        ? '×'
+        : 'Resolve';
+
+    return html`
+      <button
+        class="action-btn resolve-btn ${isLoading ? 'loading' : ''} ${isActive
+          ? 'resolved-active'
+          : ''}"
+        ?disabled=${isLoading}
+        @click=${() => this._handleResolve(alert.entity_id)}
+        title="Mark as fixed (won't re-trigger until condition clears). Turning this ON will turn other switches OFF."
       >
         ${isLoading ? '⏳' : label}
       </button>
@@ -578,21 +619,23 @@ export class EmergencyAlertsCard extends LitElement {
       type: 'custom:emergency-alerts-card',
       summary_entity: '',
       show_acknowledged: true,
-      show_cleared: false,
+      show_snoozed: true, // NEW in v2.0
+      show_resolved: false, // RENAMED from show_cleared
       show_escalated: true,
       group_by: 'severity',
       sort_by: 'first_triggered',
       severity_filter: ['critical', 'warning', 'info'],
       group_filter: [],
-      status_filter: ['active', 'acknowledged', 'escalated'],
+      status_filter: ['active', 'acknowledged', 'snoozed', 'escalated'], // Updated for v2.0
       compact_mode: false,
       show_timestamps: true,
       show_group_labels: true,
       show_severity_icons: true,
+      show_status_badge: true, // NEW in v2.0
       max_alerts_per_group: 10,
       show_acknowledge_button: true,
-      show_clear_button: true,
-      show_escalate_button: true,
+      show_snooze_button: true, // NEW in v2.0
+      show_resolve_button: true, // RENAMED from show_clear_button
       button_style: 'compact',
       entity_patterns: ['binary_sensor.emergency_*'],
       refresh_interval: 30,

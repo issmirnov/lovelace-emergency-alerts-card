@@ -48,19 +48,42 @@ export const cardStyles = css`
     border-left-color: #2196f3;
   }
 
+  /* v2.0 Alert state classes with animations */
   .alert-acknowledged {
     opacity: 0.7;
-    background: var(--disabled-text-color, #bdbdbd);
+    background: rgba(76, 175, 80, 0.1);
+    transition: opacity 0.3s ease, background 0.3s ease;
+  }
+
+  .alert-snoozed {
+    opacity: 0.6;
+    background: rgba(255, 152, 0, 0.1);
+    transition: opacity 0.3s ease, background 0.3s ease;
   }
 
   .alert-escalated {
-    border-left-color: #9c27b0;
-    background: rgba(156, 39, 176, 0.1);
+    border-left-color: #f44336;
+    background: rgba(244, 67, 54, 0.1);
+    animation: pulse 2s ease-in-out infinite;
   }
 
-  .alert-cleared {
+  .alert-resolved {
     opacity: 0.5;
-    background: var(--disabled-text-color, #e0e0e0);
+    background: rgba(33, 150, 243, 0.1);
+    transition: opacity 0.5s ease, background 0.5s ease;
+  }
+
+  /* v2.0 State-based classes for additional styling */
+  .state-snoozed {
+    border-left-width: 6px;
+  }
+
+  .state-escalated {
+    border-left-width: 6px;
+  }
+
+  .state-resolved {
+    filter: grayscale(0.3);
   }
 
   .group-header {
@@ -164,24 +187,38 @@ export const cardStyles = css`
     position: relative;
   }
 
+  /* v2.0 Button styles - switch-based */
   .acknowledge-btn {
     background: var(--primary-color, #1976d2);
     color: white;
   }
 
-  .clear-btn {
+  .snooze-btn {
+    background: var(--warning-color, #ff9800);
+    color: white;
+  }
+
+  .resolve-btn {
     background: var(--success-color, #4caf50);
     color: white;
   }
 
-  .escalate-btn {
-    background: var(--error-color, #f44336);
-    color: white;
+  /* v2.0 Active button states */
+  .acknowledged-active {
+    background: var(--success-color, #4caf50) !important;
+    box-shadow: 0 0 0 2px var(--success-color, #4caf50);
   }
 
-  .de-escalate-btn {
-    background: var(--warning-color, #ff9800);
-    color: white;
+  .snoozed-active {
+    background: var(--warning-color, #ff9800) !important;
+    box-shadow: 0 0 0 2px var(--warning-color, #ff9800);
+    animation: pulse-subtle 2s ease-in-out infinite;
+  }
+
+  .resolved-active {
+    background: var(--info-color, #2196f3) !important;
+    box-shadow: 0 0 0 2px var(--info-color, #2196f3);
+    opacity: 0.8;
   }
 
   .alert-content {
@@ -280,5 +317,113 @@ export const cardStyles = css`
 
   .error-notification .error-dismiss:hover {
     opacity: 1;
+  }
+
+  /* v2.0 Status Badge Styles */
+  .status-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 0.65em;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-right: 8px;
+    animation: fadeIn 0.3s ease;
+  }
+
+  .status-badge.active {
+    background: var(--error-color, #f44336);
+    color: white;
+  }
+
+  .status-badge.acknowledged {
+    background: var(--success-color, #4caf50);
+    color: white;
+  }
+
+  .status-badge.snoozed {
+    background: var(--warning-color, #ff9800);
+    color: white;
+  }
+
+  .status-badge.escalated {
+    background: var(--error-color, #f44336);
+    color: white;
+    animation: pulse-badge 1.5s ease-in-out infinite;
+  }
+
+  .status-badge.resolved {
+    background: var(--info-color, #2196f3);
+    color: white;
+  }
+
+  .status-badge.inactive {
+    background: var(--disabled-text-color, #bdbdbd);
+    color: white;
+  }
+
+  /* v2.0 Escalated Indicator */
+  .escalated-indicator {
+    font-size: 0.9em;
+    margin-left: 6px;
+    animation: wiggle 0.5s ease-in-out infinite;
+  }
+
+  /* v2.0 Animations */
+  @keyframes pulse {
+    0%,
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.8;
+      transform: scale(1.02);
+    }
+  }
+
+  @keyframes pulse-subtle {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.9;
+    }
+  }
+
+  @keyframes pulse-badge {
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.7);
+    }
+    50% {
+      box-shadow: 0 0 0 4px rgba(244, 67, 54, 0);
+    }
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes wiggle {
+    0%,
+    100% {
+      transform: rotate(0deg);
+    }
+    25% {
+      transform: rotate(-5deg);
+    }
+    75% {
+      transform: rotate(5deg);
+    }
   }
 `;

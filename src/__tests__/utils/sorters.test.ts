@@ -14,7 +14,8 @@ describe('sorters', () => {
     group: 'security',
     acknowledged: false,
     escalated: false,
-    cleared: false,
+    snoozed: false,
+    resolved: false,
     status: 'active',
     first_triggered: '2024-01-01T10:00:00Z',
   };
@@ -27,7 +28,8 @@ describe('sorters', () => {
     group: 'safety',
     acknowledged: false,
     escalated: false,
-    cleared: false,
+    snoozed: false,
+    resolved: false,
     status: 'active',
     first_triggered: '2024-01-01T12:00:00Z', // Newer
   };
@@ -40,7 +42,8 @@ describe('sorters', () => {
     group: 'environmental',
     acknowledged: false,
     escalated: false,
-    cleared: false,
+    snoozed: false,
+    resolved: false,
     status: 'active',
     first_triggered: '2024-01-01T11:00:00Z',
   };

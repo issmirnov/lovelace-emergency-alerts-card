@@ -1,6 +1,6 @@
 /**
- * Alert service for Home Assistant integration
- * Handles all service calls with proper error handling and user feedback
+ * Alert service for Home Assistant integration (v2.0)
+ * Handles switch toggles and service calls with proper error handling
  */
 
 import { HomeAssistant, ErrorNotification } from '../types';
@@ -11,7 +11,7 @@ import { HomeAssistant, ErrorNotification } from '../types';
 export type ErrorCallback = (error: ErrorNotification) => void;
 
 /**
- * Service for managing emergency alerts
+ * Service for managing emergency alerts (v2.0 switch-based)
  */
 export class AlertService {
   private hass: HomeAssistant;
@@ -25,6 +25,16 @@ export class AlertService {
   constructor(hass: HomeAssistant, onError?: ErrorCallback) {
     this.hass = hass;
     this.onError = onError;
+  }
+
+  /**
+   * Converts binary_sensor entity ID to switch entity ID
+   * @param entity_id Binary sensor entity ID (e.g., binary_sensor.emergency_foo)
+   * @param switchType Type of switch (acknowledged, snoozed, resolved)
+   * @returns Switch entity ID (e.g., switch.emergency_foo_acknowledged)
+   */
+  private _convertToSwitchId(entity_id: string, switchType: string): string {
+    return entity_id.replace('binary_sensor.emergency_', 'switch.emergency_') + `_${switchType}`;
   }
 
   /**
@@ -53,14 +63,15 @@ export class AlertService {
   }
 
   /**
-   * Acknowledges an alert
-   * Marks the alert as seen/handled by the user
-   * @param entity_id Entity ID of the alert to acknowledge
-   * @returns Promise that resolves when service call completes
+   * Acknowledges an alert (v2.0 - toggles switch)
+   * Toggles the acknowledged switch (mutual exclusivity enforced by backend)
+   * @param entity_id Binary sensor entity ID of the alert
+   * @returns Promise that resolves when switch toggle completes
    */
   async acknowledge(entity_id: string): Promise<void> {
     try {
-      await this.hass.callService('emergency_alerts', 'acknowledge', { entity_id });
+      const switchId = this._convertToSwitchId(entity_id, 'acknowledged');
+      await this.hass.callService('switch', 'toggle', { entity_id: switchId });
     } catch (error) {
       this.handleError('acknowledge alert', entity_id, error as Error);
       throw error; // Re-throw to allow caller to handle if needed
@@ -68,49 +79,35 @@ export class AlertService {
   }
 
   /**
-   * Clears an alert
-   * Manually resets the alert state
-   * @param entity_id Entity ID of the alert to clear
-   * @returns Promise that resolves when service call completes
+   * Snoozes an alert (v2.0 - turns on switch)
+   * Silences the alert for configured duration (default 5 minutes)
+   * Auto-expires after duration, mutual exclusivity enforced by backend
+   * @param entity_id Binary sensor entity ID of the alert
+   * @returns Promise that resolves when switch turns on
    */
-  async clear(entity_id: string): Promise<void> {
+  async snooze(entity_id: string): Promise<void> {
     try {
-      await this.hass.callService('emergency_alerts', 'clear', { entity_id });
+      const switchId = this._convertToSwitchId(entity_id, 'snoozed');
+      // Use turn_on (not toggle) since snooze auto-expires
+      await this.hass.callService('switch', 'turn_on', { entity_id: switchId });
     } catch (error) {
-      this.handleError('clear alert', entity_id, error as Error);
+      this.handleError('snooze alert', entity_id, error as Error);
       throw error;
     }
   }
 
   /**
-   * Escalates an alert
-   * Triggers urgent notification actions (e.g., SMS, sirens)
-   * @param entity_id Entity ID of the alert to escalate
-   * @returns Promise that resolves when service call completes
+   * Resolves an alert (v2.0 - toggles switch)
+   * Marks the problem as fixed, prevents re-trigger until condition clears
+   * @param entity_id Binary sensor entity ID of the alert
+   * @returns Promise that resolves when switch toggle completes
    */
-  async escalate(entity_id: string): Promise<void> {
+  async resolve(entity_id: string): Promise<void> {
     try {
-      await this.hass.callService('emergency_alerts', 'escalate', { entity_id });
+      const switchId = this._convertToSwitchId(entity_id, 'resolved');
+      await this.hass.callService('switch', 'toggle', { entity_id: switchId });
     } catch (error) {
-      this.handleError('escalate alert', entity_id, error as Error);
-      throw error;
-    }
-  }
-
-  /**
-   * De-escalates an alert
-   * Returns an escalated alert back to acknowledged state
-   * Note: Currently uses acknowledge service to reset escalated state
-   * @param entity_id Entity ID of the alert to de-escalate
-   * @returns Promise that resolves when service call completes
-   */
-  async deEscalate(entity_id: string): Promise<void> {
-    try {
-      // De-escalation is currently handled by acknowledging the alert
-      // This may change in future versions of the integration
-      await this.hass.callService('emergency_alerts', 'acknowledge', { entity_id });
-    } catch (error) {
-      this.handleError('de-escalate alert', entity_id, error as Error);
+      this.handleError('resolve alert', entity_id, error as Error);
       throw error;
     }
   }
