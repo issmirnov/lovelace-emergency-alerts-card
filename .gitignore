@@ -6,15 +6,16 @@ yarn-error.log*
 
 # Build output
 build/
-dist/
+dist/*.d.ts
+dist/*.d.ts.map
+dist/services/
+dist/utils/
+dist/__tests__/
+dist/test-setup.js
 
 # TypeScript declarations (generated)
 *.d.ts
 *.d.ts.map
-
-# Keep HACS distribution files at root
-!emergency-alerts-card.js
-!emergency-alerts-card.js.map
 
 # Coverage reports
 coverage/
