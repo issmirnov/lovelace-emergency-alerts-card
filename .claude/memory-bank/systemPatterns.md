@@ -8,15 +8,17 @@
 ```
 Home Assistant
     ├── Emergency Alerts Integration (separate project)
-    │   ├── Creates binary_sensor.emergency_* entities
-    │   ├── Provides services: acknowledge, clear, escalate
-    │   └── Manages alert state
+    │   ├── Creates binary_sensor.emergency_* entities (alert state)
+    │   ├── Creates switch.emergency_*_{acknowledged,snoozed,resolved} entities (control)
+    │   ├── Enforces mutual exclusivity (only one switch active at a time)
+    │   ├── Auto-escalates alerts after 5 minutes if not acknowledged
+    │   └── Auto-expires snooze after 5 minutes
     │
-    └── Emergency Alerts Card (this project)
-        ├── Discovers emergency alert entities
-        ├── Displays alerts in Lovelace UI
-        ├── Provides action buttons
-        └── Calls integration services
+    └── Emergency Alerts Card (this project, v2.0)
+        ├── Discovers emergency alert binary sensors
+        ├── Displays alerts with status badges and animations
+        ├── Provides toggle switches for user actions
+        └── Toggles corresponding switch entities in backend
 ```
 
 ### Component Breakdown (Modular Architecture)
@@ -30,10 +32,12 @@ Home Assistant
   - `Alert`, `CardConfig`, `EmergencyAlertEntity` - Card-specific types
   - Eliminates all `any` types (previously 41 instances)
 
-- **Service Layer** (src/services/alert-service.ts:132): Error handling wrapper
+- **Service Layer** (src/services/alert-service.ts:132): Switch control wrapper (v2.0)
   - `AlertService` class with comprehensive error handling
+  - Converts binary_sensor IDs to switch entity IDs
   - Console logging, user notifications, error callbacks
-  - Methods: acknowledge(), clear(), escalate(), deEscalate()
+  - Methods: acknowledge() [toggle], snooze() [turn_on], resolve() [toggle]
+  - Switch entities: switch.{alert}_acknowledged, switch.{alert}_snoozed, switch.{alert}_resolved
 
 - **Utility Modules** (src/utils/): Pure functions for business logic
   - `formatters.ts` - Time, icons, colors, titles (100% test coverage)
@@ -258,6 +262,26 @@ export function shouldShowAlert(alert: Alert, config: CardConfig): boolean {
 
 ## Key Technical Decisions
 
+### Decision: Switch-Based Architecture (v2.0)
+- **Context**: Original button-based design used service calls directly. Needed better state management and mutual exclusivity.
+- **Options Considered**:
+  - Keep service call approach with frontend state management
+  - Move to switch entities with backend state management
+- **Decision**: Switch-based architecture (v2.0)
+- **Rationale**:
+  - Backend enforces mutual exclusivity automatically (no frontend race conditions)
+  - Switch state persists across card reloads
+  - Switches visible in HA UI for debugging and direct control
+  - Snooze auto-expiry handled by backend timer
+  - Automatic escalation handled by backend timer
+  - Cleaner separation of concerns (card is just a UI for switches)
+- **Consequences**:
+  - Breaking change from v1.x (requires integration update)
+  - More entities in HA (3 switches per alert)
+  - But: Much more reliable, better UX, easier to maintain
+- **Result**: Production-ready v2.0 with snooze, auto-escalation, and reliable mutual exclusivity
+- **Date**: December 2024 (v2.0 Release)
+
 ### Decision: Modular Architecture (Refactoring)
 - **Context**: Single-file component grew to 1409 lines, became difficult to maintain and test
 - **Options Considered**:
@@ -327,17 +351,21 @@ export function shouldShowAlert(alert: Alert, config: CardConfig): boolean {
   - `hass.states: Record<string, EntityState>`
   - `hass.callService(domain, service, data)`
 
-### EmergencyAlertsCard ↔ Emergency Alerts Integration
+### EmergencyAlertsCard ↔ Emergency Alerts Integration (v2.0)
 - **Interaction**:
-  - Integration creates `binary_sensor.emergency_*` entities
-  - Card reads entity attributes (severity, group, acknowledged, etc.)
-  - Card calls integration services (acknowledge, clear, escalate)
+  - Integration creates `binary_sensor.emergency_*` entities (alert state)
+  - Integration creates `switch.emergency_*_{acknowledged,snoozed,resolved}` entities (control)
+  - Card reads binary_sensor attributes (severity, group, acknowledged, snoozed, resolved, escalated, etc.)
+  - Card toggles switch entities to perform actions
+  - Integration monitors switch state and enforces mutual exclusivity
 - **Dependencies**:
   - Card requires integration to be installed
-  - Card expects specific entity attributes
+  - Card expects specific entity attributes on binary sensors
+  - Card expects corresponding switch entities to exist
 - **Interface**:
-  - Entity attributes: `severity`, `group`, `acknowledged`, `escalated`, `cleared`, `first_triggered`
-  - Services: `emergency_alerts.acknowledge`, `emergency_alerts.clear`, `emergency_alerts.escalate`
+  - Binary sensor attributes: `severity`, `group`, `acknowledged`, `escalated`, `snoozed`, `resolved`, `first_triggered`, `snooze_until`
+  - Switch entities: `switch.emergency_*_acknowledged`, `switch.emergency_*_snoozed`, `switch.emergency_*_resolved`
+  - Switch services: `switch.toggle` (acknowledge, resolve), `switch.turn_on` (snooze)
 
 ## Code Organization
 
@@ -494,29 +522,30 @@ lovelace-emergency-alerts-card/
 - Only processes emergency alert entities, not all HA entities
 - Empty groups are filtered out in render but created in grouping
 
-### Action Button Click (IMPROVED October 2025)
+### Action Switch Click (v2.0 Switch-Based)
 **Files**: src/emergency-alerts-card.ts, src/services/alert-service.ts
 **Flow**:
-1. User clicks action button in UI
-2. Button's `@click` handler calls `_handle*()` method
+1. User toggles action switch in UI (acknowledge, snooze, or resolve)
+2. Switch's `@click` handler calls `_handle*()` method
 3. Entity ID added to `loadingActions` Set (LOADING STATE)
 4. `requestUpdate()` called to show loading indicator (⏳)
-5. `alertService.*()` method called with error handling
-6. Service wraps `this.hass.callService()` in try-catch (ERROR HANDLING)
-7. Home Assistant routes service call to Emergency Alerts integration
-8. Integration updates entity state
-9. Entity ID removed from `loadingActions` Set
-10. HA broadcasts state change
-11. Card's `hass` property updates
-12. Triggers re-render with new state
-13. If error occurred, user sees error notification (ERROR FEEDBACK)
+5. `alertService.*()` method converts binary_sensor ID to switch entity ID
+6. Service calls `switch.toggle` or `switch.turn_on` wrapped in try-catch (ERROR HANDLING)
+7. Home Assistant routes to Emergency Alerts integration
+8. Integration updates switch state AND enforces mutual exclusivity (turns off other switches)
+9. Integration updates binary_sensor attributes (acknowledged, snoozed, resolved, escalated)
+10. Entity ID removed from `loadingActions` Set
+11. HA broadcasts state change
+12. Card's `hass` property updates
+13. Triggers re-render with new state, status badge, and animations
+14. If error occurred, user sees error notification (ERROR FEEDBACK)
 
-**Improvements**:
-- Comprehensive error handling via AlertService
-- Loading indicators during async operations
-- Console logging for debugging
-- User error notifications
-- No confirmation for destructive actions (still could be added if desired)
+**v2.0 Key Changes**:
+- Switch entities instead of service calls (switch.toggle/turn_on instead of emergency_alerts.acknowledge)
+- Backend enforces mutual exclusivity automatically
+- Snooze uses turn_on (not toggle) since it auto-expires
+- Visual status badges update automatically based on switch state
+- Animations show active state (pulsing for snoozed/escalated)
 
 ## Anti-Patterns (Historical - Mostly Fixed)
 

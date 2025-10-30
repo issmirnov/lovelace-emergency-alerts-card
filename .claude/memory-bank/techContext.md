@@ -147,14 +147,16 @@ npm run validate:hacs
   - `hass.callService()`: Call integration services
 - **Documentation**: https://developers.home-assistant.io/
 
-### Emergency Alerts Integration
-- **Purpose**: Provides alert entities and services
+### Emergency Alerts Integration (v2.0)
+- **Purpose**: Provides alert entities and switch entities for control
 - **Authentication**: N/A (internal HA integration)
-- **Services Used**:
-  - `emergency_alerts.acknowledge`
-  - `emergency_alerts.clear`
-  - `emergency_alerts.escalate`
-- **Entity Pattern**: `binary_sensor.emergency_*`
+- **Entity Patterns**:
+  - `binary_sensor.emergency_*` - Alert state sensors
+  - `switch.emergency_*_acknowledged` - Acknowledge control
+  - `switch.emergency_*_snoozed` - Snooze control (5min auto-expiry)
+  - `switch.emergency_*_resolved` - Resolve control
+- **Switch Services**: `switch.toggle`, `switch.turn_on`
+- **Backend Features**: Mutual exclusivity, auto-escalation (5min), snooze auto-expiry (5min)
 - **Documentation**: https://github.com/issmirnov/emergency-alerts-integration
 
 ### HACS (Home Assistant Community Store)
@@ -198,7 +200,19 @@ npm run validate:hacs
 
 ## Version History
 
-### v1.1.0 (October 2025) - Comprehensive Refactoring
+### v2.0.0 (December 2024) - Switch-Based Architecture
+**Major rewrite with breaking changes**
+- **Switch-based architecture**: Control via switch entities instead of service calls
+- **Snooze functionality**: 5-minute auto-expiring silence feature
+- **Automatic escalation**: Backend auto-escalates after 5 minutes if not acknowledged
+- **Mutual exclusivity**: Backend enforces only one switch active at a time
+- **Visual enhancements**: Status badges, animations, tooltips
+- **Breaking changes**: Requires updated Emergency Alerts integration (v2.0+)
+- **No migration needed**: v1 was never publicly released
+- **Test coverage**: 90 unit tests, maintained high coverage
+- **Production ready**: Comprehensive error handling, loading states, type safety
+
+### v1.1.0 (October 2024) - Comprehensive Refactoring
 - Modular architecture (9 focused modules)
 - Comprehensive error handling (AlertService)
 - Loading states for all async operations
@@ -209,10 +223,9 @@ npm run validate:hacs
 - Enhanced CI/CD with artifact uploads
 - Full type safety (eliminated 41 `any` types)
 - JSDoc documentation throughout
-- See REFACTORING_SUMMARY.md for complete details
 
-### v1.0.0 (August 2024)
-- Initial stable release
+### v1.0.0 (August 2024) - Initial Release
+- Initial stable release (never publicly released)
 - Core features implemented
 - HACS compliance achieved
 - Basic test coverage (34%)

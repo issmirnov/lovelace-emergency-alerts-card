@@ -48,19 +48,111 @@ This project uses a Memory Bank system to maintain context across sessions. All 
 This section grows as patterns and preferences are discovered during work on this project.
 
 ### Project-Specific Patterns
-[Document patterns as they emerge]
+
+**Switch-Based Architecture (v2.0)**
+- Card controls backend via switch entities, not service calls
+- Switch entity naming: `switch.{alert_name}_{acknowledged,snoozed,resolved}`
+- Backend enforces mutual exclusivity automatically
+- Snooze uses `turn_on` (not toggle) since it auto-expires
+- AlertService converts `binary_sensor` IDs to `switch` IDs automatically
+
+**Modular Code Organization**
+- Main component in `src/emergency-alerts-card.ts` (645 lines)
+- Utilities in `src/utils/` (formatters, filters, sorters, groupers, entity-discovery)
+- Service layer in `src/services/alert-service.ts`
+- Each module has single responsibility, 100% test coverage target
+
+**Testing Approach**
+- Jest with 90 unit tests across utils and services
+- Integration tests needed for main component
+- High coverage for utils (87%) and services (100%)
+- Tests organized by module in `src/__tests__/`
 
 ### User Preferences
-[Document user's working style and preferences]
+
+**Documentation Style**
+- User prefers SIMPLE, current-focused documentation
+- NO version comparison or migration drama (user quote: "don't make it a huge deal since no one used v1 anyway")
+- Document current functionality as if it's the only version
+- Remove historical context unless specifically relevant
+
+**Development Workflow**
+- Fast iterations with Claude Code and Cursor
+- Heavy AI assistance expected and embraced
+- Test coverage matters (>80% target)
+- HACS compliance is important for distribution
+
+**Communication**
+- Direct, concise responses
+- Avoid over-explaining or verbose updates
+- Focus on what's needed, not what was done
 
 ### Lessons Learned
-[Document key insights from work sessions]
+
+**v2.0 Switch Architecture Benefits**
+- Moving state management to backend (switches) eliminated frontend race conditions
+- Switch entities provide visibility and direct control in HA UI
+- Backend timers (escalation, snooze expiry) more reliable than frontend timers
+- Clean separation: card is just a UI, backend handles logic
+
+**AI-Assisted Development Works**
+- Despite being AI-generated, code quality is high with proper guidance
+- Type safety, tests, and modularity prevent typical AI code issues
+- Comprehensive documentation helps both humans and AI understand codebase
+- JSDoc comments critical for AI to maintain context across sessions
+
+**HACS Compliance**
+- Build output must go to `www/dist/` directory
+- Sourcemaps are helpful for debugging
+- GitHub Actions validation saves time vs manual checks
+- Repository topics matter for discoverability
 
 ### Known Gotchas
-[Document tricky areas or common pitfalls]
+
+**Entity ID Conversion**
+- AlertService must convert `binary_sensor.emergency_foo` to `switch.emergency_foo_acknowledged`
+- Pattern: Replace `binary_sensor.` with `switch.` + append `_switchType`
+- Works for ANY binary_sensor, not just those with `emergency_` prefix
+
+**Mutual Exclusivity**
+- Enforced by BACKEND, not frontend
+- Frontend just toggles switches, backend handles turning off others
+- Don't try to manage exclusivity in card code
+
+**Snooze Auto-Expiry**
+- Snooze automatically turns OFF after 5 minutes
+- Use `turn_on` not `toggle` since it's one-way activation
+- Backend handles expiry timer
+
+**Alert Status Priority**
+- Order matters: resolved > escalated > snoozed > acknowledged > active
+- Status determined in `getAlertStatus()` in entity-discovery.ts:16
 
 ### Effective Approaches
-[Document what works well for this project]
+
+**When Making Documentation Updates**
+- Read existing docs first to understand current state
+- Make targeted updates, don't rewrite everything
+- Remove outdated version markers and historical context
+- Keep it simple and current-focused
+
+**When Working with Memory Bank**
+- Read all files in order at session start
+- Update based on actual work done, not speculation
+- Keep activeContext.md and progress.md current
+- Document patterns as they're discovered, not preemptively
+
+**When Updating Code**
+- Start with types (types.ts)
+- Write utils with tests (src/utils/, src/__tests__/)
+- Update main component last
+- Maintain modular structure
+
+**When Debugging**
+- Check console logs (AlertService prefixes with "[Emergency Alerts Card]")
+- Verify switch entities exist in HA (`switch.emergency_*_{acknowledged,snoozed,resolved}`)
+- Use browser DevTools with sourcemaps enabled
+- Check binary_sensor attributes for expected values
 
 ---
 
