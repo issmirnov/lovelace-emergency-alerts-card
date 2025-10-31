@@ -138,6 +138,24 @@ This section grows as patterns and preferences are discovered during work on thi
 - Order matters: resolved > escalated > snoozed > acknowledged > active
 - Status determined in `getAlertStatus()` in entity-discovery.ts:16
 
+**Card Registration (FIXED in v2.0.4)**
+- Custom cards MUST use 'custom:' prefix in type registration
+- Registration: `window.customCards.push({ type: 'custom:emergency-alerts-card', ... })`
+- Without 'custom:' prefix, card won't appear in HA dashboard picker
+- Home Assistant requirement for all custom cards
+
+**HACS Manifest Validation (FIXED in v2.0.4)**
+- NEVER add 'type' field to hacs.json manifest
+- HACS determines type from GitHub Actions workflow category parameter
+- Error: `extra keys not allowed @ data['type']`
+- Valid fields: name, render_readme, filename, homeassistant (version)
+
+**setConfig Validation (FIXED in v2.0.5)**
+- Don't validate config.type in setConfig() - HA provides it via framework
+- HA may call setConfig() with minimal config during initialization
+- Only validate: `if (!config)` - not `if (!config || !config.type)`
+- Otherwise card crashes when added via UI with empty config
+
 ### Effective Approaches
 
 **When Making Documentation Updates**

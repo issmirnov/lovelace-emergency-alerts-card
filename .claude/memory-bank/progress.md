@@ -204,6 +204,29 @@ _None - All previously identified important issues resolved in October 2025 refa
   - [x] Git tag created and pushed
   - [x] HACS installation path verified
 
+### v2.0.4 Release (Card Registration & HACS Validation) - COMPLETED ✓
+- **Target**: October 31, 2025
+- **Status**: Complete
+- **Requirements**:
+  - [x] Fixed card registration with 'custom:' prefix
+  - [x] Removed invalid 'type' field from hacs.json
+  - [x] HACS validation passing
+  - [x] Card appears in HA dashboard picker
+  - [x] PR #4 merged to main
+  - [x] Git tag created and pushed
+  - [x] Release published
+
+### v2.0.5 Release (Card Loading Fix) - COMPLETED ✓
+- **Target**: October 31, 2025
+- **Status**: Complete
+- **Requirements**:
+  - [x] Fixed setConfig validation crash
+  - [x] Card loads with empty/minimal config
+  - [x] All 90 tests passing
+  - [x] No TypeScript warnings
+  - [x] Git tag created and pushed
+  - [x] Release published
+
 ### HACS Official Listing - PENDING
 - **Target**: TBD (waiting on HACS team)
 - **Status**: Submitted, awaiting review
@@ -245,6 +268,20 @@ _None - All previously identified important issues resolved in October 2025 refa
 - **Loading States**: 0% → 100% coverage
 
 ## Changelog
+
+### v2.0.5 (October 31, 2025) - Card Loading Fix
+- **Bug Fix**: Fixed card crash when adding via UI with empty/minimal configuration
+- Root cause: Overly strict validation in setConfig() rejected configs without type field
+- Solution: Removed `!config.type` check - HA provides type field via framework
+- Impact: Card now loads successfully when added through HA UI card picker
+- All 90 tests passing, no TypeScript warnings
+
+### v2.0.4 (October 31, 2025) - Card Registration & HACS Validation Fixes
+- **Bug Fixes**: Fixed two critical issues preventing proper card operation
+- Added 'custom:' prefix to card registration (was: 'emergency-alerts-card', now: 'custom:emergency-alerts-card')
+- Removed invalid "type": "plugin" from hacs.json (HACS error: `extra keys not allowed @ data['type']`)
+- Impact: Card properly registers with HA and passes HACS validation
+- Merged from fix/card-registration-prefix branch via PR #4
 
 ### v2.0.1 (October 30, 2025) - HACS Path Fix
 - **Bug Fix**: Fixed 404 error when installing via HACS custom repository

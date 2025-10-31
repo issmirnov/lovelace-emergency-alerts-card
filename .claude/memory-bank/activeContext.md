@@ -5,9 +5,31 @@
 > **Update Frequency**: Very frequently - after every significant change
 
 ## Current Focus
-**v2.0.1 released and ready for HACS installation.** Fixed HACS path issue by moving compiled files to repository root following established patterns from popular cards.
+**v2.0.5 released and production-ready.** Fixed critical bugs preventing card registration and loading. Card now appears in HA picker and loads without crashes.
 
 ## Recent Changes
+
+### October 31, 2025 - v2.0.5 Release (Card Loading Fix)
+- **Changed**: Fixed card crash when adding via UI with empty/minimal config
+- **Why**: setConfig() had overly strict validation rejecting configs without type field
+- **Impact**: Card now loads successfully when added through HA UI card picker
+- **Root Cause**: Validation `if (!config || !config.type)` was incorrect - HA provides type field via framework
+- **Solution**: Removed `!config.type` check, only validate config object exists
+- **Testing**: All 90 tests passing, no TypeScript warnings
+- **Files**: src/emergency-alerts-card.ts, rebuilt emergency-alerts-card.js
+
+### October 31, 2025 - v2.0.4 Release (Card Registration & HACS Validation Fixes)
+- **Changed**: Fixed two critical issues preventing proper card operation
+- **Issues Fixed**:
+  1. Card not appearing in HA dashboard card picker - missing 'custom:' prefix in registration
+  2. HACS validation failure - invalid 'type' field in hacs.json manifest
+- **Impact**: Card properly registers with HA and passes HACS validation
+- **Key Changes**:
+  - Added 'custom:' prefix to window.customCards registration (was: 'emergency-alerts-card', now: 'custom:emergency-alerts-card')
+  - Removed invalid "type": "plugin" from hacs.json (HACS determines type from workflow, not manifest)
+- **HACS Error Fixed**: `extra keys not allowed @ data['type']. Got 'plugin'`
+- **Files**: src/emergency-alerts-card.ts, hacs.json, rebuilt card
+- **Note**: Merged from fix/card-registration-prefix branch via PR #4
 
 ### October 30, 2025 - v2.0.1 Release (HACS Path Fix)
 - **Changed**: Moved compiled files from dist/ to repository root
