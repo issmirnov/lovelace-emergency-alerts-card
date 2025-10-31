@@ -893,5 +893,5 @@ const $=globalThis,x=$.trustedTypes,A=x?x.createPolicy("lit-html",{createHTML:t=
     .remove-btn {
       --mdc-theme-primary: var(--error-color, #f44336);
     }
-  `,customElements.define("emergency-alerts-card",vt),customElements.define("emergency-alerts-card-editor",mt),(window.customCards=window.customCards||[]).push({type:"emergency-alerts-card",name:"Emergency Alerts Card",description:"A card to display emergency alerts from the Emergency Alerts integration"});export{vt as EmergencyAlertsCard,mt as EmergencyAlertsCardEditor};
+  `,customElements.define("emergency-alerts-card",vt),customElements.define("emergency-alerts-card-editor",mt),(window.customCards=window.customCards||[]).push({type:"custom:emergency-alerts-card",name:"Emergency Alerts Card",description:"A card to display emergency alerts from the Emergency Alerts integration"});export{vt as EmergencyAlertsCard,mt as EmergencyAlertsCardEditor};
 //# sourceMappingURL=emergency-alerts-card.js.map
