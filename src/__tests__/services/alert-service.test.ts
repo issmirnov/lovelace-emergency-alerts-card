@@ -27,7 +27,7 @@ describe('AlertService', () => {
       await alertService.acknowledge('binary_sensor.emergency_test');
 
       expect(mockHass.callService).toHaveBeenCalledWith('switch', 'toggle', {
-        entity_id: 'switch.emergency_test_acknowledged',
+        entity_id: 'switch.test_acknowledged',
       });
     });
 
@@ -78,7 +78,7 @@ describe('AlertService', () => {
       await alertService.resolve('binary_sensor.emergency_test');
 
       expect(mockHass.callService).toHaveBeenCalledWith('switch', 'toggle', {
-        entity_id: 'switch.emergency_test_resolved',
+        entity_id: 'switch.test_resolved',
       });
     });
 
@@ -109,7 +109,7 @@ describe('AlertService', () => {
       await alertService.snooze('binary_sensor.emergency_test');
 
       expect(mockHass.callService).toHaveBeenCalledWith('switch', 'turn_on', {
-        entity_id: 'switch.emergency_test_snoozed',
+        entity_id: 'switch.test_snoozed',
       });
     });
 

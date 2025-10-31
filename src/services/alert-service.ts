@@ -32,11 +32,17 @@ export class AlertService {
    * Handles any binary_sensor entity, not just those with emergency_ prefix
    * @param entity_id Binary sensor entity ID (e.g., binary_sensor.emergency_foo or binary_sensor.custom_alert)
    * @param switchType Type of switch (acknowledged, snoozed, resolved)
-   * @returns Switch entity ID (e.g., switch.emergency_foo_acknowledged or switch.custom_alert_acknowledged)
+   * @returns Switch entity ID (e.g., switch.foo_acknowledged or switch.custom_alert_acknowledged)
    */
   private _convertToSwitchId(entity_id: string, switchType: string): string {
-    // Replace binary_sensor domain with switch domain, then append switch type
-    return entity_id.replace('binary_sensor.', 'switch.') + `_${switchType}`;
+    // Replace binary_sensor domain with switch domain
+    let switchId = entity_id.replace('binary_sensor.', 'switch.');
+
+    // Remove "emergency_" prefix if present (integration doesn't use it for switches)
+    switchId = switchId.replace('emergency_', '');
+
+    // Append switch type
+    return switchId + `_${switchType}`;
   }
 
   /**
