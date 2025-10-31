@@ -89,11 +89,12 @@ export class EmergencyAlertsCard extends LitElement {
    * @param config Card configuration from Lovelace YAML
    */
   setConfig(config: CardConfig): void {
-    if (!config || !config.type) {
+    if (!config) {
       throw new Error('Invalid configuration');
     }
 
     // Merge user config with defaults (v2.0)
+    // Note: type field is always provided by Home Assistant, no default needed
     this.config = {
       show_acknowledged: true,
       show_snoozed: true, // NEW in v2.0
