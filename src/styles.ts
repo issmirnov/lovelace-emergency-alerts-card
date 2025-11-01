@@ -8,9 +8,9 @@ import { css } from 'lit';
 export const cardStyles = css`
   .card {
     padding: 16px;
-    background: var(--ha-card-background, var(--card-background-color, white));
+    background: var(--ha-card-background, var(--card-background-color, transparent));
     border-radius: var(--ha-card-border-radius, 8px);
-    box-shadow: var(--ha-card-box-shadow, 0 2px 4px rgba(0, 0, 0, 0.1));
+    box-shadow: var(--ha-card-box-shadow, none);
   }
 
   .summary-header {
@@ -66,32 +66,32 @@ export const cardStyles = css`
   /* v2.0 Alert state classes with animations */
   .alert-acknowledged {
     opacity: 0.7;
-    background: rgba(76, 175, 80, 0.1);
+    filter: brightness(0.9);
     transition:
       opacity 0.3s ease,
-      background 0.3s ease;
+      filter 0.3s ease;
   }
 
   .alert-snoozed {
     opacity: 0.6;
-    background: rgba(255, 152, 0, 0.1);
+    filter: brightness(0.85);
     transition:
       opacity 0.3s ease,
-      background 0.3s ease;
+      filter 0.3s ease;
   }
 
   .alert-escalated {
     border-left-color: #f44336;
-    background: rgba(244, 67, 54, 0.1);
+    filter: brightness(1.1);
     animation: pulse 2s ease-in-out infinite;
   }
 
   .alert-resolved {
     opacity: 0.5;
-    background: rgba(33, 150, 243, 0.1);
+    filter: brightness(0.8);
     transition:
       opacity 0.5s ease,
-      background 0.5s ease;
+      filter 0.5s ease;
   }
 
   /* v2.0 State-based classes for additional styling */
