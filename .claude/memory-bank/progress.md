@@ -151,6 +151,17 @@ _No active work in progress. Project in maintenance mode._
 - Check resources: Settings → Dashboards → Resources
 - Browser console shows 404 errors if files missing
 
+**7. Card Picker Registration (window.customCards)**
+- ✅ Registration type: `'emergency-alerts-card'` (NO prefix!)
+- ❌ Registration type: `'custom:emergency-alerts-card'` (WRONG - has prefix)
+- The `custom:` prefix is ONLY used in dashboard config YAML/JSON
+- The `window.customCards` array should register WITHOUT prefix
+- Example from button-card: Registers as `'button-card'`, used as `'custom:button-card'`
+- Example from calendar-card-pro: Registers as `'calendar-card-pro-dev'`
+- **Location**: src/emergency-alerts-card.ts:1250
+- **Test**: `window.customCards.find(c => c.type.includes('emergency'))`
+- **Verification**: Card appears in Settings → Dashboards → Add Card → By Card
+
 ## Known Issues
 
 ### Critical 🔴
@@ -297,6 +308,17 @@ _None - All previously identified important issues resolved in October 2025 refa
   - [x] Card loads without 404 errors
   - [x] Verified against working examples (gauge-card-pro, calendar-card-pro)
 
+### v2.0.9 Release (Card Picker Registration Fix) - COMPLETED ✓
+- **Target**: October 31, 2025
+- **Status**: Complete - Card appears in picker!
+- **Requirements**:
+  - [x] Identified window.customCards type prefix issue
+  - [x] Removed 'custom:' prefix from registration
+  - [x] Verified against button-card and calendar-card-pro patterns
+  - [x] All 90 tests passing
+  - [x] Git tag created and pushed
+  - [x] Card appears in Home Assistant "Add Card" picker
+
 ### HACS Official Listing - PENDING
 - **Target**: TBD (waiting on HACS team)
 - **Status**: Submitted, awaiting review
@@ -338,6 +360,20 @@ _None - All previously identified important issues resolved in October 2025 refa
 - **Loading States**: 0% → 100% coverage
 
 ## Changelog
+
+### v2.0.9 (October 31, 2025) - Card Picker Registration Fix ✅
+- **Critical Bug Fix**: Fixed card not appearing in Home Assistant dashboard card picker
+- **Root Cause**: `window.customCards` registration used wrong type format
+- **The Problem**:
+  - Registration used: `type: 'custom:emergency-alerts-card'` (WRONG)
+  - The `custom:` prefix is only for dashboard configuration, NOT registration
+  - Home Assistant's card picker couldn't find the card due to wrong type
+- **The Fix**:
+  - Changed registration to: `type: 'emergency-alerts-card'` (CORRECT - no prefix)
+  - Researched working cards: button-card, calendar-card-pro both register without prefix
+  - Updated src/emergency-alerts-card.ts:1250
+  - Rebuilt emergency-alerts-card.js with correct registration
+- **Impact**: Card now appears in Settings → Dashboards → Add Card → By Card picker!
 
 ### v2.0.8 (October 31, 2025) - HACS Release Asset Fix ✅
 - **Critical Bug Fix**: Fixed HACS file download by uploading raw JS files to release assets

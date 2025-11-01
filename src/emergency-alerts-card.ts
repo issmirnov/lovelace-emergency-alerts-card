@@ -442,9 +442,13 @@ export class EmergencyAlertsCard extends LitElement {
 
     return html`
       <div class=${classes}>
-        ${this._renderAlertIcon(alert)} ${this._renderStatusBadge(alert)}
-        ${this._renderAlertContent(alert)}
-        ${this._shouldShowActions(alert) ? this._renderAlertActions(alert) : ''}
+        <div class="alert-header">
+          ${this._renderAlertIcon(alert)} ${this._renderStatusBadge(alert)}
+          ${this._renderAlertContent(alert)}
+        </div>
+        ${this._shouldShowActions(alert)
+          ? html`<div class="alert-actions">${this._renderAlertActions(alert)}</div>`
+          : ''}
       </div>
     `;
   }

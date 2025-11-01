@@ -23,18 +23,32 @@ export const cardStyles = css`
 
   .alert-item {
     display: flex;
-    align-items: center;
+    flex-direction: column;
     padding: 12px;
     margin: 6px 0;
     border-radius: 8px;
     background: var(--secondary-background-color, var(--card-background-color, #f5f5f5));
     transition: all 0.2s ease;
     border-left: 4px solid transparent;
+    gap: 12px;
   }
 
   .alert-item:hover {
     background: var(--secondary-background-color, var(--card-background-color, #e8e8e8));
     filter: brightness(1.1);
+  }
+
+  .alert-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .alert-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-start;
+    flex-wrap: wrap;
   }
 
   .alert-critical {
@@ -120,9 +134,7 @@ export const cardStyles = css`
   .action-buttons {
     display: flex;
     gap: 8px;
-    margin-left: auto;
     flex-wrap: wrap;
-    justify-content: flex-end;
   }
 
   /* Responsive design for narrow columns */
@@ -130,30 +142,24 @@ export const cardStyles = css`
     .action-buttons {
       flex-direction: column;
       gap: 4px;
-      margin-left: 0;
-      margin-top: 8px;
       width: 100%;
+    }
+
+    .alert-actions {
+      flex-direction: column;
+      gap: 4px;
     }
 
     .action-btn {
       width: 100%;
       justify-content: center;
     }
-
-    .alert-item {
-      flex-direction: column;
-      align-items: stretch;
-    }
-
-    .alert-content {
-      margin-right: 0;
-      margin-bottom: 8px;
-    }
   }
 
   /* For very narrow columns (mobile) */
   @media (max-width: 400px) {
-    .action-buttons {
+    .action-buttons,
+    .alert-actions {
       gap: 3px;
     }
 
@@ -230,7 +236,7 @@ export const cardStyles = css`
 
   .alert-content {
     flex: 1;
-    margin-right: 12px;
+    min-width: 0;
   }
 
   .alert-name {
@@ -255,6 +261,7 @@ export const cardStyles = css`
   .compact .alert-item {
     padding: 8px;
     margin: 3px 0;
+    gap: 8px;
   }
 
   .compact .action-btn {
@@ -264,7 +271,8 @@ export const cardStyles = css`
 
   /* Compact mode responsive adjustments */
   @media (max-width: 600px) {
-    .compact .action-buttons {
+    .compact .action-buttons,
+    .compact .alert-actions {
       gap: 3px;
     }
 
