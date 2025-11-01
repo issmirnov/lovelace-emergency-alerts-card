@@ -22,9 +22,9 @@ const $=globalThis,x=$.trustedTypes,A=x?x.createPolicy("lit-html",{createHTML:t=
  */class ot extends w{constructor(){super(...arguments),this.renderOptions={host:this},this._$Do=void 0}createRenderRoot(){const t=super.createRenderRoot();return this.renderOptions.renderBefore??=t.firstChild,t}update(t){const e=this.render();this.hasUpdated||(this.renderOptions.isConnected=this.isConnected),super.update(t),this._$Do=((t,e,s)=>{const i=s?.renderBefore??e;let r=i._$litPart$;if(void 0===r){const t=s?.renderBefore??null;i._$litPart$=r=new Z(e.insertBefore(O(),t),t,void 0,s??{})}return r._$AI(t),r})(e,this.renderRoot,this.renderOptions)}connectedCallback(){super.connectedCallback(),this._$Do?.setConnected(!0)}disconnectedCallback(){super.disconnectedCallback(),this._$Do?.setConnected(!1)}render(){return F}}ot._$litElement$=!0,ot.finalized=!0,rt.litElementHydrateSupport?.({LitElement:ot});const nt=rt.litElementPolyfillSupport;nt?.({LitElement:ot}),(rt.litElementVersions??=[]).push("4.2.0");const at=o`
   .card {
     padding: 16px;
-    background: var(--ha-card-background, white);
+    background: transparent;
     border-radius: var(--ha-card-border-radius, 8px);
-    box-shadow: var(--ha-card-box-shadow, 0 2px 4px rgba(0, 0, 0, 0.1));
+    box-shadow: none;
   }
 
   .summary-header {
@@ -37,17 +37,32 @@ const $=globalThis,x=$.trustedTypes,A=x?x.createPolicy("lit-html",{createHTML:t=
 
   .alert-item {
     display: flex;
-    align-items: center;
+    flex-direction: column;
     padding: 12px;
     margin: 6px 0;
     border-radius: 8px;
-    background: var(--secondary-background-color, #f5f5f5);
+    background: var(--secondary-background-color, rgba(127, 127, 127, 0.15));
     transition: all 0.2s ease;
     border-left: 4px solid transparent;
+    gap: 12px;
   }
 
   .alert-item:hover {
-    background: var(--secondary-background-color-hover, #e8e8e8);
+    background: var(--secondary-background-color, rgba(127, 127, 127, 0.25));
+    filter: brightness(1.1);
+  }
+
+  .alert-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .alert-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-start;
+    flex-wrap: wrap;
   }
 
   .alert-critical {
@@ -65,32 +80,32 @@ const $=globalThis,x=$.trustedTypes,A=x?x.createPolicy("lit-html",{createHTML:t=
   /* v2.0 Alert state classes with animations */
   .alert-acknowledged {
     opacity: 0.7;
-    background: rgba(76, 175, 80, 0.1);
+    filter: brightness(0.9);
     transition:
       opacity 0.3s ease,
-      background 0.3s ease;
+      filter 0.3s ease;
   }
 
   .alert-snoozed {
     opacity: 0.6;
-    background: rgba(255, 152, 0, 0.1);
+    filter: brightness(0.85);
     transition:
       opacity 0.3s ease,
-      background 0.3s ease;
+      filter 0.3s ease;
   }
 
   .alert-escalated {
     border-left-color: #f44336;
-    background: rgba(244, 67, 54, 0.1);
+    filter: brightness(1.1);
     animation: pulse 2s ease-in-out infinite;
   }
 
   .alert-resolved {
     opacity: 0.5;
-    background: rgba(33, 150, 243, 0.1);
+    filter: brightness(0.8);
     transition:
       opacity 0.5s ease,
-      background 0.5s ease;
+      filter 0.5s ease;
   }
 
   /* v2.0 State-based classes for additional styling */
@@ -133,9 +148,7 @@ const $=globalThis,x=$.trustedTypes,A=x?x.createPolicy("lit-html",{createHTML:t=
   .action-buttons {
     display: flex;
     gap: 8px;
-    margin-left: auto;
     flex-wrap: wrap;
-    justify-content: flex-end;
   }
 
   /* Responsive design for narrow columns */
@@ -143,30 +156,24 @@ const $=globalThis,x=$.trustedTypes,A=x?x.createPolicy("lit-html",{createHTML:t=
     .action-buttons {
       flex-direction: column;
       gap: 4px;
-      margin-left: 0;
-      margin-top: 8px;
       width: 100%;
+    }
+
+    .alert-actions {
+      flex-direction: column;
+      gap: 4px;
     }
 
     .action-btn {
       width: 100%;
       justify-content: center;
     }
-
-    .alert-item {
-      flex-direction: column;
-      align-items: stretch;
-    }
-
-    .alert-content {
-      margin-right: 0;
-      margin-bottom: 8px;
-    }
   }
 
   /* For very narrow columns (mobile) */
   @media (max-width: 400px) {
-    .action-buttons {
+    .action-buttons,
+    .alert-actions {
       gap: 3px;
     }
 
@@ -243,7 +250,7 @@ const $=globalThis,x=$.trustedTypes,A=x?x.createPolicy("lit-html",{createHTML:t=
 
   .alert-content {
     flex: 1;
-    margin-right: 12px;
+    min-width: 0;
   }
 
   .alert-name {
@@ -268,6 +275,7 @@ const $=globalThis,x=$.trustedTypes,A=x?x.createPolicy("lit-html",{createHTML:t=
   .compact .alert-item {
     padding: 8px;
     margin: 3px 0;
+    gap: 8px;
   }
 
   .compact .action-btn {
@@ -277,7 +285,8 @@ const $=globalThis,x=$.trustedTypes,A=x?x.createPolicy("lit-html",{createHTML:t=
 
   /* Compact mode responsive adjustments */
   @media (max-width: 600px) {
-    .compact .action-buttons {
+    .compact .action-buttons,
+    .compact .alert-actions {
       gap: 3px;
     }
 
@@ -469,9 +478,11 @@ const $=globalThis,x=$.trustedTypes,A=x?x.createPolicy("lit-html",{createHTML:t=
       ${n.map(t=>this._renderAlert(t))}
     `}_renderAlert(t){const e=["alert-item",`alert-${t.severity}`,`state-${t.status}`,t.acknowledged?"alert-acknowledged":"",t.snoozed?"alert-snoozed":"",t.escalated?"alert-escalated":"",t.resolved?"alert-resolved":""].filter(Boolean).join(" ");return D`
       <div class=${e}>
-        ${this._renderAlertIcon(t)} ${this._renderStatusBadge(t)}
-        ${this._renderAlertContent(t)}
-        ${this._shouldShowActions(t)?this._renderAlertActions(t):""}
+        <div class="alert-header">
+          ${this._renderAlertIcon(t)} ${this._renderStatusBadge(t)}
+          ${this._renderAlertContent(t)}
+        </div>
+        ${this._shouldShowActions(t)?D`<div class="alert-actions">${this._renderAlertActions(t)}</div>`:""}
       </div>
     `}_renderAlertIcon(t){return this.config?.show_severity_icons?D`
       <ha-icon
