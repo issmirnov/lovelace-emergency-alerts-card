@@ -8,9 +8,9 @@ import { css } from 'lit';
 export const cardStyles = css`
   .card {
     padding: 16px;
-    background: var(--ha-card-background, var(--card-background-color, transparent));
+    background: transparent;
     border-radius: var(--ha-card-border-radius, 8px);
-    box-shadow: var(--ha-card-box-shadow, none);
+    box-shadow: none;
   }
 
   .summary-header {
@@ -27,14 +27,14 @@ export const cardStyles = css`
     padding: 12px;
     margin: 6px 0;
     border-radius: 8px;
-    background: var(--secondary-background-color, var(--card-background-color, #f5f5f5));
+    background: var(--secondary-background-color, rgba(127, 127, 127, 0.15));
     transition: all 0.2s ease;
     border-left: 4px solid transparent;
     gap: 12px;
   }
 
   .alert-item:hover {
-    background: var(--secondary-background-color, var(--card-background-color, #e8e8e8));
+    background: var(--secondary-background-color, rgba(127, 127, 127, 0.25));
     filter: brightness(1.1);
   }
 
