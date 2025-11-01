@@ -8,7 +8,7 @@ import { css } from 'lit';
 export const cardStyles = css`
   .card {
     padding: 16px;
-    background: var(--ha-card-background, white);
+    background: var(--ha-card-background, var(--card-background-color, white));
     border-radius: var(--ha-card-border-radius, 8px);
     box-shadow: var(--ha-card-box-shadow, 0 2px 4px rgba(0, 0, 0, 0.1));
   }
@@ -27,13 +27,14 @@ export const cardStyles = css`
     padding: 12px;
     margin: 6px 0;
     border-radius: 8px;
-    background: var(--secondary-background-color, #f5f5f5);
+    background: var(--secondary-background-color, var(--card-background-color, #f5f5f5));
     transition: all 0.2s ease;
     border-left: 4px solid transparent;
   }
 
   .alert-item:hover {
-    background: var(--secondary-background-color-hover, #e8e8e8);
+    background: var(--secondary-background-color, var(--card-background-color, #e8e8e8));
+    filter: brightness(1.1);
   }
 
   .alert-critical {

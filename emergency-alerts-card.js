@@ -22,7 +22,7 @@ const $=globalThis,x=$.trustedTypes,A=x?x.createPolicy("lit-html",{createHTML:t=
  */class ot extends w{constructor(){super(...arguments),this.renderOptions={host:this},this._$Do=void 0}createRenderRoot(){const t=super.createRenderRoot();return this.renderOptions.renderBefore??=t.firstChild,t}update(t){const e=this.render();this.hasUpdated||(this.renderOptions.isConnected=this.isConnected),super.update(t),this._$Do=((t,e,s)=>{const i=s?.renderBefore??e;let r=i._$litPart$;if(void 0===r){const t=s?.renderBefore??null;i._$litPart$=r=new Z(e.insertBefore(O(),t),t,void 0,s??{})}return r._$AI(t),r})(e,this.renderRoot,this.renderOptions)}connectedCallback(){super.connectedCallback(),this._$Do?.setConnected(!0)}disconnectedCallback(){super.disconnectedCallback(),this._$Do?.setConnected(!1)}render(){return F}}ot._$litElement$=!0,ot.finalized=!0,rt.litElementHydrateSupport?.({LitElement:ot});const nt=rt.litElementPolyfillSupport;nt?.({LitElement:ot}),(rt.litElementVersions??=[]).push("4.2.0");const at=o`
   .card {
     padding: 16px;
-    background: var(--ha-card-background, white);
+    background: var(--ha-card-background, var(--card-background-color, white));
     border-radius: var(--ha-card-border-radius, 8px);
     box-shadow: var(--ha-card-box-shadow, 0 2px 4px rgba(0, 0, 0, 0.1));
   }
@@ -41,13 +41,14 @@ const $=globalThis,x=$.trustedTypes,A=x?x.createPolicy("lit-html",{createHTML:t=
     padding: 12px;
     margin: 6px 0;
     border-radius: 8px;
-    background: var(--secondary-background-color, #f5f5f5);
+    background: var(--secondary-background-color, var(--card-background-color, #f5f5f5));
     transition: all 0.2s ease;
     border-left: 4px solid transparent;
   }
 
   .alert-item:hover {
-    background: var(--secondary-background-color-hover, #e8e8e8);
+    background: var(--secondary-background-color, var(--card-background-color, #e8e8e8));
+    filter: brightness(1.1);
   }
 
   .alert-critical {
