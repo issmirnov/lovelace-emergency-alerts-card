@@ -4,9 +4,9 @@
 > **Purpose**: What works, what's left, current status
 
 ## Status Overview
-**Current Phase**: Production (v2.0.1 - Live Release)
-**Overall Progress**: 100% complete (v2.0 released, HACS installation working)
-**Last Updated**: October 30, 2025
+**Current Phase**: Production (v2.0.8 - Live Release)
+**Overall Progress**: 100% complete (v2.0.8 released, HACS installation fully working)
+**Last Updated**: October 31, 2025
 
 ## Completed ✓
 
@@ -107,6 +107,49 @@ _No active work in progress. Project in maintenance mode._
 - **Alert creation UI** - Reason: Belongs in integration, not card
 - **Backend notification logic** - Reason: Handled by integration and automations
 - **Multi-instance sync** - Reason: No clear use case, complex implementation
+
+## HACS Distribution Lessons Learned 📚
+
+### Critical Knowledge (v2.0.6-v2.0.8 Debugging)
+
+**1. Release Asset Structure**
+- ✅ HACS downloads **individual files** from GitHub release assets
+- ❌ HACS does NOT extract zip or tar.gz archives
+- ✅ Upload: `emergency-alerts-card.js` directly
+- ❌ Upload: `emergency-alerts-card-v2.0.8.zip` (WRONG!)
+- **Reference**: gauge-card-pro, calendar-card-pro use raw JS files
+
+**2. hacs.json Configuration**
+- ✅ Valid fields for PLUGINS: `name`, `filename`, `homeassistant`, `render_readme`
+- ❌ `content_in_root` is ONLY for INTEGRATIONS, not plugins!
+- Adding invalid fields confuses HACS file discovery logic
+- **Always verify**: https://hacs.xyz/docs/publish/plugin
+
+**3. File Naming Convention**
+- Repository: `lovelace-emergency-alerts-card`
+- File: `emergency-alerts-card.js` ✅
+- HACS allows "lovelace-" prefix to be stripped from filename
+- Both `lovelace-emergency-alerts-card.js` and `emergency-alerts-card.js` are valid
+
+**4. File Location**
+- Files in repository root ✅
+- `dist/` folder is gitignored ✅
+- Build outputs to root via rollup.config.js ✅
+- HACS searches: dist/ (first), then root (second)
+
+**5. Minification**
+- Terser is configured and working ✅
+- Bundle size: 49KB (minified + sourcemap)
+- File is properly minified (single-line, short var names)
+- No additional optimization needed
+
+**6. Debugging HACS Issues**
+- Check: `~/config/www/community/lovelace-emergency-alerts-card/`
+- Should contain: `emergency-alerts-card.js` ✅
+- Should NOT contain: `.zip`, `.tar.gz` files ❌
+- Test URL: `http://homeassistant:8123/hacsfiles/lovelace-emergency-alerts-card/emergency-alerts-card.js`
+- Check resources: Settings → Dashboards → Resources
+- Browser console shows 404 errors if files missing
 
 ## Known Issues
 
@@ -227,6 +270,33 @@ _None - All previously identified important issues resolved in October 2025 refa
   - [x] Git tag created and pushed
   - [x] Release published
 
+### v2.0.6 Release (HACS content_in_root Attempt) - FAILED ❌
+- **Target**: October 31, 2025
+- **Status**: Failed - Introduced bug
+- **Problem**: Added `content_in_root: true` to hacs.json
+- **Root Cause**: `content_in_root` is only for INTEGRATIONS, not PLUGINS
+- **Impact**: HACS failed to download files, got 404 errors
+- **Lesson**: Always research HACS field meanings before using them
+
+### v2.0.7 Release (Remove content_in_root) - FAILED ❌
+- **Target**: October 31, 2025
+- **Status**: Failed - Wrong fix
+- **Problem**: Removed content_in_root but still used tar.gz/zip packaging
+- **Root Cause**: HACS downloads raw JS files from release assets, not archives
+- **Impact**: HACS downloaded .tar.gz and .zip files instead of .js files
+- **Lesson**: Release assets structure matters - HACS expects individual files
+
+### v2.0.8 Release (Raw JS File Upload) - COMPLETED ✓
+- **Target**: October 31, 2025
+- **Status**: Complete - HACS installation working!
+- **Requirements**:
+  - [x] Modified release.yml to upload raw JS files
+  - [x] Removed tar.gz and zip packaging
+  - [x] HACS successfully downloads emergency-alerts-card.js
+  - [x] Files appear in ~/config/www/community/
+  - [x] Card loads without 404 errors
+  - [x] Verified against working examples (gauge-card-pro, calendar-card-pro)
+
 ### HACS Official Listing - PENDING
 - **Target**: TBD (waiting on HACS team)
 - **Status**: Submitted, awaiting review
@@ -268,6 +338,32 @@ _None - All previously identified important issues resolved in October 2025 refa
 - **Loading States**: 0% → 100% coverage
 
 ## Changelog
+
+### v2.0.8 (October 31, 2025) - HACS Release Asset Fix ✅
+- **Critical Bug Fix**: Fixed HACS file download by uploading raw JS files to release assets
+- **Root Cause**: HACS downloads individual files from GitHub release assets, not archives
+- **The Problem**:
+  - v2.0.0-v2.0.7 uploaded tar.gz and zip files
+  - HACS downloaded these archives but couldn't serve them as JS
+  - Result: Files in www/community/ were .zip and .tar.gz instead of .js
+- **The Fix**:
+  - Modified release.yml to upload emergency-alerts-card.js directly
+  - Also uploads emergency-alerts-card.js.map for debugging
+  - Removed all packaging steps (tar/zip creation)
+  - Matches pattern from gauge-card-pro, calendar-card-pro
+- **Impact**: HACS now correctly downloads .js file and card loads successfully!
+
+### v2.0.7 (October 31, 2025) - HACS Config Fix (Partial) ⚠️
+- **Bug Fix**: Removed invalid `content_in_root` field from hacs.json
+- `content_in_root` is only for INTEGRATIONS, not PLUGINS (dashboard cards)
+- Still failed because release workflow uploaded tar.gz/zip instead of raw JS
+- Led to v2.0.8 which fixed the packaging issue
+
+### v2.0.6 (October 31, 2025) - HACS content_in_root Attempt ❌
+- **Bug Introduced**: Added `content_in_root: true` to hacs.json (WRONG!)
+- This field is only valid for integrations, not plugins
+- Caused HACS to fail downloading files completely
+- Important lesson: Research HACS documentation before adding fields
 
 ### v2.0.5 (October 31, 2025) - Card Loading Fix
 - **Bug Fix**: Fixed card crash when adding via UI with empty/minimal configuration
