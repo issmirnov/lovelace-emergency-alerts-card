@@ -1247,7 +1247,7 @@ declare global {
 
 // Register with Home Assistant
 (window.customCards = window.customCards || []).push({
-  type: 'custom:emergency-alerts-card',
+  type: 'emergency-alerts-card',
   name: 'Emergency Alerts Card',
   description: 'A card to display emergency alerts from the Emergency Alerts integration',
 });
