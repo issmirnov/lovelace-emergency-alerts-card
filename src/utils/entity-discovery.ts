@@ -22,6 +22,11 @@ import { matchesEntityPattern } from './filters';
 export function getAlertStatus(entity: HassEntity): AlertStatus {
   const attrs = entity.attributes;
 
+  // If entity itself is off/inactive, treat as inactive regardless of flags
+  if (entity.state !== 'on') {
+    return 'inactive';
+  }
+
   if (attrs.resolved) return 'resolved';
   if (attrs.escalated) return 'escalated';
   if (attrs.snoozed) return 'snoozed';
