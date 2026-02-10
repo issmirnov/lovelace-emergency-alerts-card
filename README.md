@@ -30,23 +30,24 @@ Contributions and feedback welcome!
 - **Responsive Design**: Adapts to different screen sizes with mobile-optimized layouts
 - **Home Assistant Integration**: Seamlessly integrates with the Emergency Alerts integration
 
-## Alert Action Switches
+## Alert Actions (V4.0.0)
 
-The Emergency Alerts Card provides **three toggle switches** for each alert, with mutual exclusivity enforced by the backend:
+The Emergency Alerts Card provides **three action buttons** for each alert, using select entity controls:
 
-| Switch         | What It Does | Behavior | Visual State |
+| Button         | What It Does | Behavior | Visual State |
 |----------------|--------------|----------|--------------|
-| **Acknowledge** | Mark as "working on it" - prevents auto-escalation | Toggle ON/OFF | Green glow when active |
-| **Snooze (5m)** | Silence for 5 minutes - auto-expires | Turns ON (auto-turns OFF after 5min) | Orange glow with pulse animation |
-| **Resolve**    | Mark as fixed - won't re-trigger until condition fully clears | Toggle ON/OFF | Blue glow when active |
+| **Acknowledge** | Mark as "working on it" - prevents auto-escalation | Sets state to "acknowledged" | Green glow when active |
+| **Snooze (5m)** | Silence for 5 minutes - auto-expires | Sets state to "snoozed", auto-resets | Orange glow with pulse animation |
+| **Resolve**    | Mark as fixed - won't re-trigger until condition fully clears | Sets state to "resolved" | Blue glow when active |
+
+**V4.0 Architecture:** Buttons call `select.select_option` on the alert's state control entity (e.g., `select.door_alert_state`).
 
 **Key Behaviors:**
 
-- **Mutual Exclusivity**: Only ONE switch can be ON at a time. Turning one ON automatically turns others OFF.
-- **Auto-Escalation**: If an active alert isn't acknowledged within 5 minutes, it automatically escalates (pulsing red animation).
-- **Snooze Auto-Expiry**: Snooze automatically expires after 5 minutes, returning alert to previous state.
-- **Tooltips**: Hover over switches to see detailed explanations of their behavior.
-- **Visual Feedback**: Active switches show colored glows, status badges, and animations.
+- **Mutual Exclusivity**: Only ONE state can be active at a time (enforced by select entity)
+- **Auto-Escalation**: If an active alert isn't acknowledged within 5 minutes, it automatically escalates (pulsing red animation)
+- **Snooze Auto-Expiry**: Snooze automatically expires after 5 minutes, returning alert to active state
+- **Visual Feedback**: States show colored glows, status badges, and animations
 
 **Example Scenario:**
 1. **Alert triggers** (e.g., "Water Leak Detected"): All switches OFF, alert shows as "ACTIVE" badge.
