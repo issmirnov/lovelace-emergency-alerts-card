@@ -23,11 +23,12 @@ describe('AlertService', () => {
   });
 
   describe('acknowledge', () => {
-    test('calls switch toggle service for acknowledged switch', async () => {
+    test('calls select.select_option service for v4 architecture', async () => {
       await alertService.acknowledge('binary_sensor.emergency_test');
 
-      expect(mockHass.callService).toHaveBeenCalledWith('switch', 'toggle', {
-        entity_id: 'switch.test_acknowledged',
+      expect(mockHass.callService).toHaveBeenCalledWith('select', 'select_option', {
+        entity_id: 'select.test_state',
+        option: 'acknowledged',
       });
     });
 
@@ -67,18 +68,20 @@ describe('AlertService', () => {
     test('handles non-emergency prefixed entity IDs correctly', async () => {
       await alertService.acknowledge('binary_sensor.custom_alert');
 
-      expect(mockHass.callService).toHaveBeenCalledWith('switch', 'toggle', {
-        entity_id: 'switch.custom_alert_acknowledged',
+      expect(mockHass.callService).toHaveBeenCalledWith('select', 'select_option', {
+        entity_id: 'select.binary_sensor.custom_alert_state',
+        option: 'acknowledged',
       });
     });
   });
 
   describe('resolve', () => {
-    test('calls switch toggle service for resolved switch', async () => {
+    test('calls select.select_option service for v4', async () => {
       await alertService.resolve('binary_sensor.emergency_test');
 
-      expect(mockHass.callService).toHaveBeenCalledWith('switch', 'toggle', {
-        entity_id: 'switch.test_resolved',
+      expect(mockHass.callService).toHaveBeenCalledWith('select', 'select_option', {
+        entity_id: 'select.test_state',
+        option: 'resolved',
       });
     });
 
@@ -98,18 +101,20 @@ describe('AlertService', () => {
     test('handles non-emergency prefixed entity IDs correctly', async () => {
       await alertService.resolve('binary_sensor.custom_alert');
 
-      expect(mockHass.callService).toHaveBeenCalledWith('switch', 'toggle', {
-        entity_id: 'switch.custom_alert_resolved',
+      expect(mockHass.callService).toHaveBeenCalledWith('select', 'select_option', {
+        entity_id: 'select.binary_sensor.custom_alert_state',
+        option: 'resolved',
       });
     });
   });
 
   describe('snooze', () => {
-    test('calls switch turn_on service for snoozed switch', async () => {
+    test('calls select.select_option service for v4', async () => {
       await alertService.snooze('binary_sensor.emergency_test');
 
-      expect(mockHass.callService).toHaveBeenCalledWith('switch', 'turn_on', {
-        entity_id: 'switch.test_snoozed',
+      expect(mockHass.callService).toHaveBeenCalledWith('select', 'select_option', {
+        entity_id: 'select.test_state',
+        option: 'snoozed',
       });
     });
 
@@ -129,8 +134,9 @@ describe('AlertService', () => {
     test('handles non-emergency prefixed entity IDs correctly', async () => {
       await alertService.snooze('binary_sensor.custom_alert');
 
-      expect(mockHass.callService).toHaveBeenCalledWith('switch', 'turn_on', {
-        entity_id: 'switch.custom_alert_snoozed',
+      expect(mockHass.callService).toHaveBeenCalledWith('select', 'select_option', {
+        entity_id: 'select.binary_sensor.custom_alert_state',
+        option: 'snoozed',
       });
     });
   });
