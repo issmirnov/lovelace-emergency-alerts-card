@@ -1,6 +1,6 @@
 /**
- * Alert service for Home Assistant integration (v2.0)
- * Handles switch toggles and service calls with proper error handling
+ * Alert service for Home Assistant integration (v4.0)
+ * Uses select entities and direct service calls
  */
 
 import { HomeAssistant, ErrorNotification } from '../types';
@@ -11,7 +11,7 @@ import { HomeAssistant, ErrorNotification } from '../types';
 export type ErrorCallback = (error: ErrorNotification) => void;
 
 /**
- * Service for managing emergency alerts (v2.0 switch-based)
+ * Service for managing emergency alerts (v4.0 select-based)
  */
 export class AlertService {
   private hass: HomeAssistant;
@@ -28,21 +28,14 @@ export class AlertService {
   }
 
   /**
-   * Converts binary_sensor entity ID to switch entity ID
-   * Handles any binary_sensor entity, not just those with emergency_ prefix
-   * @param entity_id Binary sensor entity ID (e.g., binary_sensor.emergency_foo or binary_sensor.custom_alert)
-   * @param switchType Type of switch (acknowledged, snoozed, resolved)
-   * @returns Switch entity ID (e.g., switch.foo_acknowledged or switch.custom_alert_acknowledged)
+   * Converts binary_sensor entity ID to select entity ID
+   * @param entity_id Binary sensor entity ID (e.g., binary_sensor.emergency_sun_up)
+   * @returns Select entity ID (e.g., select.sun_up_state)
    */
-  private _convertToSwitchId(entity_id: string, switchType: string): string {
-    // Replace binary_sensor domain with switch domain
-    let switchId = entity_id.replace('binary_sensor.', 'switch.');
-
-    // Remove "emergency_" prefix if present (integration doesn't use it for switches)
-    switchId = switchId.replace('emergency_', '');
-
-    // Append switch type
-    return switchId + `_${switchType}`;
+  private _convertToSelectId(entity_id: string): string {
+    // Remove binary_sensor.emergency_ prefix to get alert name
+    const alertName = entity_id.replace('binary_sensor.emergency_', '');
+    return `select.${alertName}_state`;
   }
 
   /**
@@ -71,33 +64,37 @@ export class AlertService {
   }
 
   /**
-   * Acknowledges an alert (v2.0 - toggles switch)
-   * Toggles the acknowledged switch (mutual exclusivity enforced by backend)
+   * Acknowledges an alert (v4.0 - uses select entity)
+   * Sets the select entity to "acknowledged" state
    * @param entity_id Binary sensor entity ID of the alert
-   * @returns Promise that resolves when switch toggle completes
+   * @returns Promise that resolves when state changes
    */
   async acknowledge(entity_id: string): Promise<void> {
     try {
-      const switchId = this._convertToSwitchId(entity_id, 'acknowledged');
-      await this.hass.callService('switch', 'toggle', { entity_id: switchId });
+      const selectId = this._convertToSelectId(entity_id);
+      await this.hass.callService('select', 'select_option', {
+        entity_id: selectId,
+        option: 'acknowledged',
+      });
     } catch (error) {
       this.handleError('acknowledge alert', entity_id, error as Error);
-      throw error; // Re-throw to allow caller to handle if needed
+      throw error;
     }
   }
 
   /**
-   * Snoozes an alert (v2.0 - turns on switch)
-   * Silences the alert for configured duration (default 5 minutes)
-   * Auto-expires after duration, mutual exclusivity enforced by backend
+   * Snoozes an alert (v4.0 - uses select entity)
+   * Sets the select entity to "snoozed" state
    * @param entity_id Binary sensor entity ID of the alert
-   * @returns Promise that resolves when switch turns on
+   * @returns Promise that resolves when state changes
    */
   async snooze(entity_id: string): Promise<void> {
     try {
-      const switchId = this._convertToSwitchId(entity_id, 'snoozed');
-      // Use turn_on (not toggle) since snooze auto-expires
-      await this.hass.callService('switch', 'turn_on', { entity_id: switchId });
+      const selectId = this._convertToSelectId(entity_id);
+      await this.hass.callService('select', 'select_option', {
+        entity_id: selectId,
+        option: 'snoozed',
+      });
     } catch (error) {
       this.handleError('snooze alert', entity_id, error as Error);
       throw error;
@@ -105,15 +102,18 @@ export class AlertService {
   }
 
   /**
-   * Resolves an alert (v2.0 - toggles switch)
-   * Marks the problem as fixed, prevents re-trigger until condition clears
+   * Resolves an alert (v4.0 - uses select entity)
+   * Sets the select entity to "resolved" state
    * @param entity_id Binary sensor entity ID of the alert
-   * @returns Promise that resolves when switch toggle completes
+   * @returns Promise that resolves when state changes
    */
   async resolve(entity_id: string): Promise<void> {
     try {
-      const switchId = this._convertToSwitchId(entity_id, 'resolved');
-      await this.hass.callService('switch', 'toggle', { entity_id: switchId });
+      const selectId = this._convertToSelectId(entity_id);
+      await this.hass.callService('select', 'select_option', {
+        entity_id: selectId,
+        option: 'resolved',
+      });
     } catch (error) {
       this.handleError('resolve alert', entity_id, error as Error);
       throw error;
