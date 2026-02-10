@@ -1,6 +1,6 @@
 {
   "name": "emergency-alerts-card",
-  "version": "3.0.0",
+  "version": "4.0.0",
   "description": "A custom Lovelace card for Emergency Alerts integration",
   "main": "emergency-alerts-card.js",
   "scripts": {
