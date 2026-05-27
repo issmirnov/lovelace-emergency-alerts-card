@@ -493,7 +493,7 @@ const $=globalThis,x=$.trustedTypes,A=x?x.createPolicy("lit-html",{createHTML:t=
     `:""}_renderAlertContent(t){return D`
       <div class="alert-content">
         <div class="alert-name">
-          ${t.name} ${t.escalated?D`<span class="escalated-indicator">⚠️</span>`:""}
+          ${t.name} ${function(t){return t.escalated&&"info"!==t.severity}(t)?D`<span class="escalated-indicator">⚠️</span>`:""}
         </div>
         <div class="alert-meta">
           ${this.config?.show_group_labels?D`<span>${t.group}</span>`:""}
@@ -514,7 +514,7 @@ const $=globalThis,x=$.trustedTypes,A=x?x.createPolicy("lit-html",{createHTML:t=
       >
         ${e?"⏳":i}
       </button>
-    `}_renderSnoozeButton(t,e){if(!this.config?.show_snooze_button)return"";const s=t.snoozed,i=s?"icons_only"===this.config?.button_style?"🔕":`🔕 Snoozed ${this._formatSnoozeTime(t.snooze_until)}`:"icons_only"===this.config?.button_style?"💤":"Snooze (5m)";return D`
+    `}_renderSnoozeButton(t,e){if(!this.config?.show_snooze_button)return"";if(!function(t){return"info"!==t.severity}(t))return"";const s=t.snoozed,i=s?"icons_only"===this.config?.button_style?"🔕":`🔕 Snoozed ${this._formatSnoozeTime(t.snooze_until)}`:"icons_only"===this.config?.button_style?"💤":"Snooze (5m)";return D`
       <button
         class="action-btn snooze-btn ${e?"loading":""} ${s?"snoozed-active":""}"
         ?disabled=${e}
