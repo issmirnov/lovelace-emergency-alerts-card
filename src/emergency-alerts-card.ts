@@ -27,6 +27,7 @@ import {
 import { shouldShowAlert } from './utils/filters';
 import { sortAlerts } from './utils/sorters';
 import { groupAlerts, getGroupCount } from './utils/groupers';
+import { shouldShowSnoozeButton, shouldShowEscalatedBadge } from './utils/severity-ui';
 import {
   discoverAlertEntities,
   entityToAlert,
@@ -479,7 +480,7 @@ export class EmergencyAlertsCard extends LitElement {
     return html`
       <div class="alert-content">
         <div class="alert-name">
-          ${alert.name} ${alert.escalated ? html`<span class="escalated-indicator">⚠️</span>` : ''}
+          ${alert.name} ${shouldShowEscalatedBadge(alert) ? html`<span class="escalated-indicator">⚠️</span>` : ''}
         </div>
         <div class="alert-meta">
           ${this.config?.show_group_labels ? html`<span>${alert.group}</span>` : ''}
@@ -550,6 +551,11 @@ export class EmergencyAlertsCard extends LitElement {
    */
   private _renderSnoozeButton(alert: Alert, isLoading: boolean): TemplateResult | string {
     if (!this.config?.show_snooze_button) {
+      return '';
+    }
+
+    // Info-severity alerts are ambient (v4.4.0+) — hide snooze.
+    if (!shouldShowSnoozeButton(alert)) {
       return '';
     }
 
