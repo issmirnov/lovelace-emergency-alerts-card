@@ -493,7 +493,8 @@ const $=globalThis,x=$.trustedTypes,A=x?x.createPolicy("lit-html",{createHTML:t=
     `:""}_renderAlertContent(t){return D`
       <div class="alert-content">
         <div class="alert-name">
-          ${t.name} ${function(t){return t.escalated&&"info"!==t.severity}(t)?D`<span class="escalated-indicator">⚠️</span>`:""}
+          ${t.name}
+          ${function(t){return t.escalated&&"info"!==t.severity}(t)?D`<span class="escalated-indicator">⚠️</span>`:""}
         </div>
         <div class="alert-meta">
           ${this.config?.show_group_labels?D`<span>${t.group}</span>`:""}
