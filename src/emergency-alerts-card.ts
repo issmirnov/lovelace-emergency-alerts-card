@@ -480,7 +480,10 @@ export class EmergencyAlertsCard extends LitElement {
     return html`
       <div class="alert-content">
         <div class="alert-name">
-          ${alert.name} ${shouldShowEscalatedBadge(alert) ? html`<span class="escalated-indicator">⚠️</span>` : ''}
+          ${alert.name}
+          ${shouldShowEscalatedBadge(alert)
+            ? html`<span class="escalated-indicator">⚠️</span>`
+            : ''}
         </div>
         <div class="alert-meta">
           ${this.config?.show_group_labels ? html`<span>${alert.group}</span>` : ''}

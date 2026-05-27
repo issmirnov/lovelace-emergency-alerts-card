@@ -40,11 +40,15 @@ describe('shouldShowSnoozeButton', () => {
 
 describe('shouldShowEscalatedBadge', () => {
   test('shows when warning alert is escalated', () => {
-    expect(shouldShowEscalatedBadge(makeAlert({ severity: 'warning', escalated: true }))).toBe(true);
+    expect(shouldShowEscalatedBadge(makeAlert({ severity: 'warning', escalated: true }))).toBe(
+      true
+    );
   });
 
   test('shows when critical alert is escalated', () => {
-    expect(shouldShowEscalatedBadge(makeAlert({ severity: 'critical', escalated: true }))).toBe(true);
+    expect(shouldShowEscalatedBadge(makeAlert({ severity: 'critical', escalated: true }))).toBe(
+      true
+    );
   });
 
   test('hidden when alert is not escalated', () => {
